@@ -1,0 +1,363 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>lupyne.engine.analyzers &mdash; lupyne 2.4 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../../_static/language_data.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> lupyne
+          
+
+          
+            
+            <img src="../../../_static/logo.png" class="logo" alt="Logo"/>
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                2.4
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../engine.html">engine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../server.html">server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples.html">examples</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">lupyne</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>lupyne.engine.analyzers</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for lupyne.engine.analyzers</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Mapping</span>
+<span class="kn">from</span> <span class="nn">java.io</span> <span class="kn">import</span> <span class="n">StringReader</span>
+<span class="kn">from</span> <span class="nn">java.lang</span> <span class="kn">import</span> <span class="n">Float</span>
+<span class="kn">from</span> <span class="nn">java.util</span> <span class="kn">import</span> <span class="n">HashMap</span>
+<span class="kn">from</span> <span class="nn">org.apache.lucene</span> <span class="kn">import</span> <span class="n">analysis</span><span class="p">,</span> <span class="n">queryparser</span><span class="p">,</span> <span class="n">search</span><span class="p">,</span> <span class="n">util</span>
+<span class="kn">from</span> <span class="nn">org.apache.lucene.search</span> <span class="kn">import</span> <span class="n">uhighlight</span>
+<span class="kn">from</span> <span class="nn">org.apache.pylucene.analysis</span> <span class="kn">import</span> <span class="n">PythonAnalyzer</span><span class="p">,</span> <span class="n">PythonTokenFilter</span>
+<span class="kn">from</span> <span class="nn">org.apache.pylucene.queryparser.classic</span> <span class="kn">import</span> <span class="n">PythonQueryParser</span>
+
+
+<div class="viewcode-block" id="TokenStream"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.analyzers.TokenStream">[docs]</a><span class="k">class</span> <span class="nc">TokenStream</span><span class="p">(</span><span class="n">analysis</span><span class="o">.</span><span class="n">TokenStream</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;TokenStream mixin with support for iteration and attributes cached as properties.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span> <span class="fm">__next__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">incrementToken</span><span class="p">():</span>
+            <span class="k">return</span> <span class="bp">self</span>
+        <span class="k">raise</span> <span class="ne">StopIteration</span>
+
+    <span class="k">def</span> <span class="fm">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="bp">cls</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">analysis</span><span class="o">.</span><span class="n">tokenattributes</span><span class="p">,</span> <span class="n">name</span> <span class="o">+</span> <span class="s1">&#39;Attribute&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">class_</span>
+        <span class="n">attr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getAttribute</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">hasAttribute</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">addAttribute</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
+        <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">attr</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">offset</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;start and stop character offset&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">Offset</span><span class="o">.</span><span class="n">startOffset</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">Offset</span><span class="o">.</span><span class="n">endOffset</span><span class="p">()</span>
+
+    <span class="nd">@offset</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">offset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Offset</span><span class="o">.</span><span class="n">setOffset</span><span class="p">(</span><span class="o">*</span><span class="n">item</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">payload</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;payload bytes&quot;&quot;&quot;</span>
+        <span class="n">payload</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Payload</span><span class="o">.</span><span class="n">payload</span>
+        <span class="k">return</span> <span class="n">payload</span> <span class="ow">and</span> <span class="n">payload</span><span class="o">.</span><span class="n">utf8ToString</span><span class="p">()</span>
+
+    <span class="nd">@payload</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">payload</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Payload</span><span class="o">.</span><span class="n">payload</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">BytesRef</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">positionIncrement</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;position relative to the previous token&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">PositionIncrement</span><span class="o">.</span><span class="n">positionIncrement</span>
+
+    <span class="nd">@positionIncrement</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">positionIncrement</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">PositionIncrement</span><span class="o">.</span><span class="n">positionIncrement</span> <span class="o">=</span> <span class="n">index</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">charTerm</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;term text&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">CharTerm</span><span class="o">.</span><span class="n">toString</span><span class="p">()</span>
+
+    <span class="nd">@charTerm</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">charTerm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">CharTerm</span><span class="o">.</span><span class="n">setEmpty</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">CharTerm</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;lexical type&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">Type</span><span class="o">.</span><span class="n">type</span><span class="p">()</span>
+
+    <span class="nd">@type</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Type</span><span class="o">.</span><span class="n">setType</span><span class="p">(</span><span class="n">text</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="TokenFilter"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.analyzers.TokenFilter">[docs]</a><span class="k">class</span> <span class="nc">TokenFilter</span><span class="p">(</span><span class="n">PythonTokenFilter</span><span class="p">,</span> <span class="n">TokenStream</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Create an iterable lucene TokenFilter from a TokenStream.</span>
+
+<span class="sd">    Subclass and override :meth:`incrementToken`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">input</span><span class="p">:</span> <span class="n">analysis</span><span class="o">.</span><span class="n">TokenStream</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">input</span> <span class="o">=</span> <span class="nb">input</span>
+
+<div class="viewcode-block" id="TokenFilter.incrementToken"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.analyzers.TokenFilter.incrementToken">[docs]</a>    <span class="k">def</span> <span class="nf">incrementToken</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Advance to next token and return whether the stream is not empty.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">input</span><span class="o">.</span><span class="n">incrementToken</span><span class="p">()</span></div></div>
+
+
+<div class="viewcode-block" id="Analyzer"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.analyzers.Analyzer">[docs]</a><span class="k">class</span> <span class="nc">Analyzer</span><span class="p">(</span><span class="n">PythonAnalyzer</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return a lucene Analyzer which chains together a tokenizer and filters.</span>
+
+<span class="sd">    :param tokenizer: lucene Tokenizer class or callable, called with no args</span>
+<span class="sd">    :param filters: lucene TokenFilter classes or callables, successively called on input tokens</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tokenizer</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="o">*</span><span class="n">filters</span><span class="p">:</span> <span class="n">Callable</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tokenizer</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">filters</span> <span class="o">=</span> <span class="n">tokenizer</span><span class="p">,</span> <span class="n">filters</span>
+
+<div class="viewcode-block" id="Analyzer.standard"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.analyzers.Analyzer.standard">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">standard</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">filters</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Analyzer&#39;</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return equivalent of StandardAnalyzer with additional filters.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">analysis</span><span class="o">.</span><span class="n">standard</span><span class="o">.</span><span class="n">StandardTokenizer</span><span class="p">,</span> <span class="n">analysis</span><span class="o">.</span><span class="n">LowerCaseFilter</span><span class="p">,</span> <span class="o">*</span><span class="n">filters</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Analyzer.whitespace"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.analyzers.Analyzer.whitespace">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">whitespace</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">filters</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Analyzer&#39;</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return equivalent of WhitespaceAnalyzer with additional filters.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">analysis</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">WhitespaceTokenizer</span><span class="p">,</span> <span class="o">*</span><span class="n">filters</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">components</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">reader</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">source</span> <span class="o">=</span> <span class="n">tokens</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tokenizer</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">reader</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">source</span><span class="o">.</span><span class="n">reader</span> <span class="o">=</span> <span class="n">reader</span>
+        <span class="k">for</span> <span class="nb">filter</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">filters</span><span class="p">:</span>
+            <span class="n">tokens</span> <span class="o">=</span> <span class="nb">filter</span><span class="p">(</span><span class="n">tokens</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">source</span><span class="p">,</span> <span class="n">tokens</span>
+
+    <span class="k">def</span> <span class="nf">createComponents</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">analysis</span><span class="o">.</span><span class="n">Analyzer</span><span class="o">.</span><span class="n">TokenStreamComponents</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">(</span><span class="n">field</span><span class="p">))</span>
+
+<div class="viewcode-block" id="Analyzer.tokens"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.analyzers.Analyzer.tokens">[docs]</a>    <span class="k">def</span> <span class="nf">tokens</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">field</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">analysis</span><span class="o">.</span><span class="n">TokenStream</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return lucene TokenStream from text.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="n">StringReader</span><span class="p">(</span><span class="n">text</span><span class="p">))[</span><span class="mi">1</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="Analyzer.parse"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.analyzers.Analyzer.parse">[docs]</a>    <span class="k">def</span> <span class="nf">parse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">field</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">op</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">parser</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">attrs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">search</span><span class="o">.</span><span class="n">Query</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return parsed lucene Query.</span>
+
+<span class="sd">        :param query: query string</span>
+<span class="sd">        :param field: default query field name, sequence of names, or boost mapping</span>
+<span class="sd">        :param op: default query operator (&#39;or&#39;, &#39;and&#39;)</span>
+<span class="sd">        :param parser: custom PythonQueryParser class</span>
+<span class="sd">        :param attrs: additional attributes to set on the parser</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># parsers aren&#39;t thread-safe (nor slow), so create one each time</span>
+        <span class="bp">cls</span> <span class="o">=</span> <span class="n">queryparser</span><span class="o">.</span><span class="n">classic</span><span class="o">.</span><span class="n">QueryParser</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="n">queryparser</span><span class="o">.</span><span class="n">classic</span><span class="o">.</span><span class="n">MultiFieldQueryParser</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="n">field</span><span class="p">,</span> <span class="bp">self</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">):</span>
+            <span class="n">boosts</span> <span class="o">=</span> <span class="n">HashMap</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">field</span><span class="p">:</span>
+                <span class="n">boosts</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">Float</span><span class="p">(</span><span class="n">field</span><span class="p">[</span><span class="n">key</span><span class="p">]))</span>
+            <span class="n">args</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">field</span><span class="p">),</span> <span class="bp">self</span><span class="p">,</span> <span class="n">boosts</span>  <span class="c1"># type: ignore</span>
+        <span class="n">parser</span> <span class="o">=</span> <span class="p">(</span><span class="n">parser</span> <span class="ow">or</span> <span class="bp">cls</span><span class="p">)(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">op</span><span class="p">:</span>
+            <span class="n">parser</span><span class="o">.</span><span class="n">defaultOperator</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">queryparser</span><span class="o">.</span><span class="n">classic</span><span class="o">.</span><span class="n">QueryParser</span><span class="o">.</span><span class="n">Operator</span><span class="p">,</span> <span class="n">op</span><span class="o">.</span><span class="n">upper</span><span class="p">())</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">attrs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="n">parser</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">parser</span><span class="p">,</span> <span class="n">queryparser</span><span class="o">.</span><span class="n">classic</span><span class="o">.</span><span class="n">MultiFieldQueryParser</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">parser</span><span class="p">,</span> <span class="n">query</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">parser</span><span class="p">,</span> <span class="n">PythonQueryParser</span><span class="p">):</span>
+                <span class="n">parser</span><span class="o">.</span><span class="n">finalize</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Analyzer.highlight"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.analyzers.Analyzer.highlight">[docs]</a>    <span class="k">def</span> <span class="nf">highlight</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="n">search</span><span class="o">.</span><span class="n">Query</span><span class="p">,</span> <span class="n">field</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">content</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">count</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return highlighted content.</span>
+
+<span class="sd">        :param query: lucene Query</span>
+<span class="sd">        :param field: field name</span>
+<span class="sd">        :param content: text</span>
+<span class="sd">        :param count: optional maximum number of passages</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">uhighlight</span><span class="o">.</span><span class="n">UnifiedHighlighter</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">highlightWithoutSearcher</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">content</span><span class="p">,</span> <span class="n">count</span><span class="p">)</span><span class="o">.</span><span class="n">toString</span><span class="p">()</span></div></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, Aric Coady
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

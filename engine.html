@@ -1,0 +1,1592 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>engine &mdash; lupyne 2.4 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="server" href="server.html" />
+    <link rel="prev" title="Lupyne’s documentation" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> lupyne
+          
+
+          
+            
+            <img src="_static/logo.png" class="logo" alt="Logo"/>
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                2.4
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">engine</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#module-lupyne.engine.analyzers">analyzers</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#tokenstream">TokenStream</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#tokenfilter">TokenFilter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#analyzer">Analyzer</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-lupyne.engine.indexers">indexers</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#indexreader">IndexReader</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#indexsearcher">IndexSearcher</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#multisearcher">MultiSearcher</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#indexwriter">IndexWriter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#indexer">Indexer</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-lupyne.engine.documents">documents</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#document">Document</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hit">Hit</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hits">Hits</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#groups">Groups</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#groupingsearch">GroupingSearch</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#field">Field</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#nestedfield">NestedField</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#datetimefield">DateTimeField</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#spatialfield">SpatialField</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-lupyne.engine.queries">queries</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#query">Query</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#spanquery">SpanQuery</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#spellparser">SpellParser</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="server.html">server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">examples</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">lupyne</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>engine</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/engine.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  
+<style>
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast.container,
+.nboutput.nblast.container {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast.container + .nbinput.container {
+    margin-top: -19px;
+}
+
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
+
+/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
+.math {
+    text-align: unset;
+}
+</style>
+<div class="section" id="module-lupyne.engine">
+<span id="engine"></span><h1>engine<a class="headerlink" href="#module-lupyne.engine" title="Permalink to this headline">¶</a></h1>
+<p>Pythonic wrapper around <a class="reference external" href="http://lucene.apache.org/pylucene/">PyLucene</a> search engine.</p>
+<p>Provides high-level interfaces to indexes and documents,
+abstracting away java lucene primitives.</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#tokenfilter">TokenFilter</a>, <a class="reference internal" href="#analyzer">Analyzer</a></p></li>
+<li><p><a class="reference internal" href="#indexsearcher">IndexSearcher</a>, <a class="reference internal" href="#multisearcher">MultiSearcher</a>, <a class="reference internal" href="#indexwriter">IndexWriter</a>, <a class="reference internal" href="#indexer">Indexer</a></p></li>
+<li><p><a class="reference internal" href="#document">Document</a>, <a class="reference internal" href="#field">Field</a>, <a class="reference internal" href="#nestedfield">NestedField</a>, <a class="reference internal" href="#datetimefield">DateTimeField</a>, <a class="reference internal" href="#spatialfield">SpatialField</a></p></li>
+<li><p><a class="reference internal" href="#query">Query</a></p></li>
+</ul>
+<div class="section" id="module-lupyne.engine.analyzers">
+<span id="analyzers"></span><h2>analyzers<a class="headerlink" href="#module-lupyne.engine.analyzers" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="tokenstream">
+<h3>TokenStream<a class="headerlink" href="#tokenstream" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="lupyne.engine.analyzers.TokenStream">
+<em class="property">class </em><code class="sig-prename descclassname">lupyne.engine.analyzers.</code><code class="sig-name descname">TokenStream</code><a class="reference internal" href="_modules/lupyne/engine/analyzers.html#TokenStream"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.analyzers.TokenStream" title="Permalink to this definition">¶</a></dt>
+<dd><p>TokenStream mixin with support for iteration and attributes cached as properties.</p>
+<dl class="method">
+<dt id="lupyne.engine.analyzers.TokenStream.charTerm">
+<em class="property">property </em><code class="sig-name descname">charTerm</code><a class="headerlink" href="#lupyne.engine.analyzers.TokenStream.charTerm" title="Permalink to this definition">¶</a></dt>
+<dd><p>term text</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.analyzers.TokenStream.offset">
+<em class="property">property </em><code class="sig-name descname">offset</code><a class="headerlink" href="#lupyne.engine.analyzers.TokenStream.offset" title="Permalink to this definition">¶</a></dt>
+<dd><p>start and stop character offset</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.analyzers.TokenStream.payload">
+<em class="property">property </em><code class="sig-name descname">payload</code><a class="headerlink" href="#lupyne.engine.analyzers.TokenStream.payload" title="Permalink to this definition">¶</a></dt>
+<dd><p>payload bytes</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.analyzers.TokenStream.positionIncrement">
+<em class="property">property </em><code class="sig-name descname">positionIncrement</code><a class="headerlink" href="#lupyne.engine.analyzers.TokenStream.positionIncrement" title="Permalink to this definition">¶</a></dt>
+<dd><p>position relative to the previous token</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.analyzers.TokenStream.type">
+<em class="property">property </em><code class="sig-name descname">type</code><a class="headerlink" href="#lupyne.engine.analyzers.TokenStream.type" title="Permalink to this definition">¶</a></dt>
+<dd><p>lexical type</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="tokenfilter">
+<h3>TokenFilter<a class="headerlink" href="#tokenfilter" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="lupyne.engine.analyzers.TokenFilter">
+<em class="property">class </em><code class="sig-prename descclassname">lupyne.engine.analyzers.</code><code class="sig-name descname">TokenFilter</code><span class="sig-paren">(</span><em class="sig-param">input: org.apache.lucene.analysis.TokenStream</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lupyne/engine/analyzers.html#TokenFilter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.analyzers.TokenFilter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create an iterable lucene TokenFilter from a TokenStream.</p>
+<p>Subclass and override <a class="reference internal" href="#lupyne.engine.analyzers.TokenFilter.incrementToken" title="lupyne.engine.analyzers.TokenFilter.incrementToken"><code class="xref py py-meth docutils literal notranslate"><span class="pre">incrementToken()</span></code></a>.</p>
+<dl class="method">
+<dt id="lupyne.engine.analyzers.TokenFilter.incrementToken">
+<code class="sig-name descname">incrementToken</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; bool<a class="reference internal" href="_modules/lupyne/engine/analyzers.html#TokenFilter.incrementToken"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.analyzers.TokenFilter.incrementToken" title="Permalink to this definition">¶</a></dt>
+<dd><p>Advance to next token and return whether the stream is not empty.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="analyzer">
+<h3>Analyzer<a class="headerlink" href="#analyzer" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="lupyne.engine.analyzers.Analyzer">
+<em class="property">class </em><code class="sig-prename descclassname">lupyne.engine.analyzers.</code><code class="sig-name descname">Analyzer</code><span class="sig-paren">(</span><em class="sig-param">tokenizer: Callable</em>, <em class="sig-param">*filters: Callable</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lupyne/engine/analyzers.html#Analyzer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.analyzers.Analyzer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a lucene Analyzer which chains together a tokenizer and filters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tokenizer</strong> – lucene Tokenizer class or callable, called with no args</p></li>
+<li><p><strong>filters</strong> – lucene TokenFilter classes or callables, successively called on input tokens</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="method">
+<dt id="lupyne.engine.analyzers.Analyzer.highlight">
+<code class="sig-name descname">highlight</code><span class="sig-paren">(</span><em class="sig-param">query: org.apache.lucene.search.Query</em>, <em class="sig-param">field: str</em>, <em class="sig-param">content: str</em>, <em class="sig-param">count: int = 1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lupyne/engine/analyzers.html#Analyzer.highlight"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.analyzers.Analyzer.highlight" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return highlighted content.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>query</strong> – lucene Query</p></li>
+<li><p><strong>field</strong> – field name</p></li>
+<li><p><strong>content</strong> – text</p></li>
+<li><p><strong>count</strong> – optional maximum number of passages</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.analyzers.Analyzer.parse">
+<code class="sig-name descname">parse</code><span class="sig-paren">(</span><em class="sig-param">query: str</em>, <em class="sig-param">field=''</em>, <em class="sig-param">op=''</em>, <em class="sig-param">parser=None</em>, <em class="sig-param">**attrs</em><span class="sig-paren">)</span> &#x2192; org.apache.lucene.search.Query<a class="reference internal" href="_modules/lupyne/engine/analyzers.html#Analyzer.parse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.analyzers.Analyzer.parse" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return parsed lucene Query.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>query</strong> – query string</p></li>
+<li><p><strong>field</strong> – default query field name, sequence of names, or boost mapping</p></li>
+<li><p><strong>op</strong> – default query operator (‘or’, ‘and’)</p></li>
+<li><p><strong>parser</strong> – custom PythonQueryParser class</p></li>
+<li><p><strong>attrs</strong> – additional attributes to set on the parser</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.analyzers.Analyzer.standard">
+<em class="property">classmethod </em><code class="sig-name descname">standard</code><span class="sig-paren">(</span><em class="sig-param">*filters: Callable</em><span class="sig-paren">)</span> &#x2192; lupyne.engine.analyzers.Analyzer<a class="reference internal" href="_modules/lupyne/engine/analyzers.html#Analyzer.standard"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.analyzers.Analyzer.standard" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return equivalent of StandardAnalyzer with additional filters.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.analyzers.Analyzer.tokens">
+<code class="sig-name descname">tokens</code><span class="sig-paren">(</span><em class="sig-param">text: str</em>, <em class="sig-param">field: str = None</em><span class="sig-paren">)</span> &#x2192; org.apache.lucene.analysis.TokenStream<a class="reference internal" href="_modules/lupyne/engine/analyzers.html#Analyzer.tokens"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.analyzers.Analyzer.tokens" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return lucene TokenStream from text.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.analyzers.Analyzer.whitespace">
+<em class="property">classmethod </em><code class="sig-name descname">whitespace</code><span class="sig-paren">(</span><em class="sig-param">*filters: Callable</em><span class="sig-paren">)</span> &#x2192; lupyne.engine.analyzers.Analyzer<a class="reference internal" href="_modules/lupyne/engine/analyzers.html#Analyzer.whitespace"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.analyzers.Analyzer.whitespace" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return equivalent of WhitespaceAnalyzer with additional filters.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+<div class="section" id="module-lupyne.engine.indexers">
+<span id="indexers"></span><h2>indexers<a class="headerlink" href="#module-lupyne.engine.indexers" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="indexreader">
+<h3>IndexReader<a class="headerlink" href="#indexreader" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="lupyne.engine.indexers.IndexReader">
+<em class="property">class </em><code class="sig-prename descclassname">lupyne.engine.indexers.</code><code class="sig-name descname">IndexReader</code><span class="sig-paren">(</span><em class="sig-param">reader</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lupyne/engine/indexers.html#IndexReader"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.indexers.IndexReader" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delegated lucene IndexReader, with a mapping interface of ids to document objects.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>reader</strong> – lucene IndexReader</p>
+</dd>
+</dl>
+<dl class="method">
+<dt id="lupyne.engine.indexers.IndexReader.__len__">
+<code class="sig-name descname">__len__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/lupyne/engine/indexers.html#IndexReader.__len__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.indexers.IndexReader.__len__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.indexers.IndexReader.__contains__">
+<code class="sig-name descname">__contains__</code><span class="sig-paren">(</span><em class="sig-param">id: int</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lupyne/engine/indexers.html#IndexReader.__contains__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.indexers.IndexReader.__contains__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.indexers.IndexReader.__iter__">
+<code class="sig-name descname">__iter__</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; Iterator[int]<a class="reference internal" href="_modules/lupyne/engine/indexers.html#IndexReader.__iter__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.indexers.IndexReader.__iter__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.indexers.IndexReader.copy">
+<code class="sig-name descname">copy</code><span class="sig-paren">(</span><em class="sig-param">dest</em>, <em class="sig-param">query: org.apache.lucene.search.Query = None</em>, <em class="sig-param">exclude: org.apache.lucene.search.Query = None</em>, <em class="sig-param">merge: int = 0</em><span class="sig-paren">)</span> &#x2192; int<a class="reference internal" href="_modules/lupyne/engine/indexers.html#IndexReader.copy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.indexers.IndexReader.copy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Copy the index to the destination directory.</p>
+<p>Optimized to use hard links if the destination is a file system path.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dest</strong> – destination directory path or lucene Directory</p></li>
+<li><p><strong>query</strong> – optional lucene Query to select documents</p></li>
+<li><p><strong>exclude</strong> – optional lucene Query to exclude documents</p></li>
+<li><p><strong>merge</strong> – optionally merge into maximum number of segments</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.indexers.IndexReader.directory">
+<em class="property">property </em><code class="sig-name descname">directory</code><a class="headerlink" href="#lupyne.engine.indexers.IndexReader.directory" title="Permalink to this definition">¶</a></dt>
+<dd><p>reader’s lucene Directory</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.indexers.IndexReader.docs">
+<code class="sig-name descname">docs</code><span class="sig-paren">(</span><em class="sig-param">name: str</em>, <em class="sig-param">value</em>, <em class="sig-param">counts=False</em><span class="sig-paren">)</span> &#x2192; Iterator<a class="reference internal" href="_modules/lupyne/engine/indexers.html#IndexReader.docs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.indexers.IndexReader.docs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate doc ids which contain given term, optionally with frequency counts.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.indexers.IndexReader.docvalues">
+<code class="sig-name descname">docvalues</code><span class="sig-paren">(</span><em class="sig-param">name: str</em>, <em class="sig-param">type=None</em><span class="sig-paren">)</span> &#x2192; lupyne.engine.queries.DocValues.Sorted<a class="reference internal" href="_modules/lupyne/engine/indexers.html#IndexReader.docvalues"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.indexers.IndexReader.docvalues" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return chained lucene DocValues, suitable for custom sorting or grouping.</p>
+<p>Note multi-valued DocValues aren’t thread-safe and only supported ordered iteration.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> – field name</p></li>
+<li><p><strong>type</strong> – int or float for converting values</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.indexers.IndexReader.fieldinfos">
+<em class="property">property </em><code class="sig-name descname">fieldinfos</code><a class="headerlink" href="#lupyne.engine.indexers.IndexReader.fieldinfos" title="Permalink to this definition">¶</a></dt>
+<dd><p>mapping of field names to lucene FieldInfos</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.indexers.IndexReader.morelikethis">
+<code class="sig-name descname">morelikethis</code><span class="sig-paren">(</span><em class="sig-param">doc</em>, <em class="sig-param">*fields</em>, <em class="sig-param">**attrs</em><span class="sig-paren">)</span> &#x2192; lupyne.engine.queries.Query<a class="reference internal" href="_modules/lupyne/engine/indexers.html#IndexReader.morelikethis"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.indexers.IndexReader.morelikethis" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return MoreLikeThis query for document.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>doc</strong> – document id or text</p></li>
+<li><p><strong>fields</strong> – document fields to use, optional for termvectors</p></li>
+<li><p><strong>attrs</strong> – additional attributes to set on the morelikethis object</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.indexers.IndexReader.path">
+<em class="property">property </em><code class="sig-name descname">path</code><a class="headerlink" href="#lupyne.engine.indexers.IndexReader.path" title="Permalink to this definition">¶</a></dt>
+<dd><p>FSDirectory path</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.indexers.IndexReader.positions">
+<code class="sig-name descname">positions</code><span class="sig-paren">(</span><em class="sig-param">name: str</em>, <em class="sig-param">value</em>, <em class="sig-param">payloads=False</em>, <em class="sig-param">offsets=False</em><span class="sig-paren">)</span> &#x2192; Iterator[tuple]<a class="reference internal" href="_modules/lupyne/engine/indexers.html#IndexReader.positions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.indexers.IndexReader.positions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate doc ids and positions which contain given term, optionally with offsets, or only ones with payloads.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.indexers.IndexReader.positionvector">
+<code class="sig-name descname">positionvector</code><span class="sig-paren">(</span><em class="sig-param">id: int</em>, <em class="sig-param">field: str</em>, <em class="sig-param">offsets=False</em><span class="sig-paren">)</span> &#x2192; Iterator[tuple]<a class="reference internal" href="_modules/lupyne/engine/indexers.html#IndexReader.positionvector"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.indexers.IndexReader.positionvector" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate terms and positions for given doc id and field, optionally with character offsets.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.indexers.IndexReader.readers">
+<em class="property">property </em><code class="sig-name descname">readers</code><a class="headerlink" href="#lupyne.engine.indexers.IndexReader.readers" title="Permalink to this definition">¶</a></dt>
+<dd><p>segment readers</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.indexers.IndexReader.segments">
+<em class="property">property </em><code class="sig-name descname">segments</code><a class="headerlink" href="#lupyne.engine.indexers.IndexReader.segments" title="Permalink to this definition">¶</a></dt>
+<dd><p>segment filenames with document counts</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.indexers.IndexReader.sortfield">
+<code class="sig-name descname">sortfield</code><span class="sig-paren">(</span><em class="sig-param">name: str</em>, <em class="sig-param">type=None</em>, <em class="sig-param">reverse=False</em><span class="sig-paren">)</span> &#x2192; org.apache.lucene.search.SortField<a class="reference internal" href="_modules/lupyne/engine/indexers.html#IndexReader.sortfield"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.indexers.IndexReader.sortfield" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return lucene SortField, deriving the the type from FieldInfos if necessary.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> – field name</p></li>
+<li><p><strong>type</strong> – int, float, or name compatible with SortField constants</p></li>
+<li><p><strong>reverse</strong> – reverse flag used with sort</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.indexers.IndexReader.suggest">
+<code class="sig-name descname">suggest</code><span class="sig-paren">(</span><em class="sig-param">name: str</em>, <em class="sig-param">value</em>, <em class="sig-param">count: int = 1</em>, <em class="sig-param">**attrs</em><span class="sig-paren">)</span> &#x2192; list<a class="reference internal" href="_modules/lupyne/engine/indexers.html#IndexReader.suggest"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.indexers.IndexReader.suggest" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return spelling suggestions from DirectSpellChecker.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> – field name</p></li>
+<li><p><strong>value</strong> – term</p></li>
+<li><p><strong>count</strong> – maximum number of suggestions</p></li>
+<li><p><strong>attrs</strong> – DirectSpellChecker options</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.indexers.IndexReader.terms">
+<code class="sig-name descname">terms</code><span class="sig-paren">(</span><em class="sig-param">name: str</em>, <em class="sig-param">value=''</em>, <em class="sig-param">stop=''</em>, <em class="sig-param">counts=False</em>, <em class="sig-param">distance=0</em>, <em class="sig-param">prefix=0</em><span class="sig-paren">)</span> &#x2192; Iterator<a class="reference internal" href="_modules/lupyne/engine/indexers.html#IndexReader.terms"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.indexers.IndexReader.terms" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a slice of term values, optionally with frequency counts.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> – field name</p></li>
+<li><p><strong>value</strong> – term prefix, start value (given stop), or fuzzy value (given distance)</p></li>
+<li><p><strong>stop</strong> – optional upper bound for range terms</p></li>
+<li><p><strong>counts</strong> – include frequency counts</p></li>
+<li><p><strong>distance</strong> – maximum edit distance for fuzzy terms</p></li>
+<li><p><strong>prefix</strong> – prefix length for fuzzy terms</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.indexers.IndexReader.termvector">
+<code class="sig-name descname">termvector</code><span class="sig-paren">(</span><em class="sig-param">id: int</em>, <em class="sig-param">field: str</em>, <em class="sig-param">counts=False</em><span class="sig-paren">)</span> &#x2192; Iterator<a class="reference internal" href="_modules/lupyne/engine/indexers.html#IndexReader.termvector"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.indexers.IndexReader.termvector" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate terms for given doc id and field, optionally with frequency counts.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.indexers.IndexReader.timestamp">
+<em class="property">property </em><code class="sig-name descname">timestamp</code><a class="headerlink" href="#lupyne.engine.indexers.IndexReader.timestamp" title="Permalink to this definition">¶</a></dt>
+<dd><p>timestamp of reader’s last commit</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="indexsearcher">
+<h3>IndexSearcher<a class="headerlink" href="#indexsearcher" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="lupyne.engine.indexers.IndexSearcher">
+<em class="property">class </em><code class="sig-prename descclassname">lupyne.engine.indexers.</code><code class="sig-name descname">IndexSearcher</code><span class="sig-paren">(</span><em class="sig-param">directory</em>, <em class="sig-param">analyzer=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lupyne/engine/indexers.html#IndexSearcher"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.indexers.IndexSearcher" title="Permalink to this definition">¶</a></dt>
+<dd><p>Inherited lucene IndexSearcher, with a mixed-in IndexReader.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>directory</strong> – directory path, lucene Directory, or lucene IndexReader</p></li>
+<li><p><strong>analyzer</strong> – lucene Analyzer, default StandardAnalyzer</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="method">
+<dt id="lupyne.engine.indexers.IndexSearcher.__getitem__">
+<code class="sig-name descname">__getitem__</code><span class="sig-paren">(</span><em class="sig-param">id: int</em><span class="sig-paren">)</span> &#x2192; lupyne.engine.documents.Document<a class="reference internal" href="_modules/lupyne/engine/indexers.html#IndexSearcher.__getitem__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.indexers.IndexSearcher.__getitem__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return <a class="reference internal" href="#document">Document</a>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.indexers.IndexSearcher.__del__">
+<code class="sig-name descname">__del__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/lupyne/engine/indexers.html#IndexSearcher.__del__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.indexers.IndexSearcher.__del__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Closes index.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lupyne.engine.indexers.IndexSearcher.spellcheckers">
+<code class="sig-name descname">spellcheckers</code><a class="headerlink" href="#lupyne.engine.indexers.IndexSearcher.spellcheckers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Mapping of cached spellcheckers by field.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.indexers.IndexSearcher.complete">
+<code class="sig-name descname">complete</code><span class="sig-paren">(</span><em class="sig-param">field: str</em>, <em class="sig-param">prefix: str</em>, <em class="sig-param">count: int = None</em><span class="sig-paren">)</span> &#x2192; list<a class="reference internal" href="_modules/lupyne/engine/indexers.html#IndexSearcher.complete"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.indexers.IndexSearcher.complete" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return ordered suggested words for prefix.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.indexers.IndexSearcher.count">
+<code class="sig-name descname">count</code><span class="sig-paren">(</span><em class="sig-param">*query</em>, <em class="sig-param">**options</em><span class="sig-paren">)</span> &#x2192; int<a class="reference internal" href="_modules/lupyne/engine/indexers.html#IndexSearcher.count"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.indexers.IndexSearcher.count" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return number of hits for given query or term.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>query</strong> – <a class="reference internal" href="#lupyne.engine.indexers.IndexSearcher.search" title="lupyne.engine.indexers.IndexSearcher.search"><code class="xref py py-meth docutils literal notranslate"><span class="pre">search()</span></code></a> compatible query, or optimally a name and value</p></li>
+<li><p><strong>options</strong> – additional <a class="reference internal" href="#lupyne.engine.indexers.IndexSearcher.search" title="lupyne.engine.indexers.IndexSearcher.search"><code class="xref py py-meth docutils literal notranslate"><span class="pre">search()</span></code></a> options</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.indexers.IndexSearcher.facets">
+<code class="sig-name descname">facets</code><span class="sig-paren">(</span><em class="sig-param">query</em>, <em class="sig-param">*fields: str</em>, <em class="sig-param">**query_map: dict</em><span class="sig-paren">)</span> &#x2192; dict<a class="reference internal" href="_modules/lupyne/engine/indexers.html#IndexSearcher.facets"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.indexers.IndexSearcher.facets" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return mapping of document counts for the intersection with each facet.</p>
+<div class="versionchanged">
+<p><span class="versionmodified changed">Changed in version 1.6: </span>filters are no longer implicitly cached, a <a class="reference internal" href="#groupingsearch">GroupingSearch</a> is used instead</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>query</strong> – query string or lucene Query</p></li>
+<li><p><strong>fields</strong> – field names for lucene GroupingSearch</p></li>
+<li><p><strong>query_map</strong> – <cite>{facet: {key: query, …}, …}</cite> for intersected query counts</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.indexers.IndexSearcher.get">
+<code class="sig-name descname">get</code><span class="sig-paren">(</span><em class="sig-param">id: int</em>, <em class="sig-param">*fields: str</em><span class="sig-paren">)</span> &#x2192; lupyne.engine.documents.Document<a class="reference internal" href="_modules/lupyne/engine/indexers.html#IndexSearcher.get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.indexers.IndexSearcher.get" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return <a class="reference internal" href="#document">Document</a> with only selected fields loaded.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.indexers.IndexSearcher.groupby">
+<code class="sig-name descname">groupby</code><span class="sig-paren">(</span><em class="sig-param">field: str</em>, <em class="sig-param">query</em>, <em class="sig-param">count: int = None</em>, <em class="sig-param">start: int = 0</em>, <em class="sig-param">**attrs</em><span class="sig-paren">)</span> &#x2192; lupyne.engine.documents.Groups<a class="reference internal" href="_modules/lupyne/engine/indexers.html#IndexSearcher.groupby"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.indexers.IndexSearcher.groupby" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return <a class="reference internal" href="#hits">Hits</a> grouped by field using a <a class="reference internal" href="#groupingsearch">GroupingSearch</a>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.indexers.IndexSearcher.highlighter">
+<em class="property">property </em><code class="sig-name descname">highlighter</code><a class="headerlink" href="#lupyne.engine.indexers.IndexSearcher.highlighter" title="Permalink to this definition">¶</a></dt>
+<dd><p>lucene UnifiedHighlighter</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.indexers.IndexSearcher.load">
+<em class="property">classmethod </em><code class="sig-name descname">load</code><span class="sig-paren">(</span><em class="sig-param">directory</em>, <em class="sig-param">analyzer=None</em><span class="sig-paren">)</span> &#x2192; lupyne.engine.indexers.IndexSearcher<a class="reference internal" href="_modules/lupyne/engine/indexers.html#IndexSearcher.load"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.indexers.IndexSearcher.load" title="Permalink to this definition">¶</a></dt>
+<dd><p>Open <a class="reference internal" href="#indexsearcher">IndexSearcher</a> with a lucene RAMDirectory, loading index into memory.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.indexers.IndexSearcher.match">
+<code class="sig-name descname">match</code><span class="sig-paren">(</span><em class="sig-param">document: Mapping</em>, <em class="sig-param">*queries</em><span class="sig-paren">)</span> &#x2192; Iterator[float]<a class="reference internal" href="_modules/lupyne/engine/indexers.html#IndexSearcher.match"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.indexers.IndexSearcher.match" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate scores for all queries against a given document mapping.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.indexers.IndexSearcher.reopen">
+<code class="sig-name descname">reopen</code><span class="sig-paren">(</span><em class="sig-param">spellcheckers=False</em><span class="sig-paren">)</span> &#x2192; lupyne.engine.indexers.IndexSearcher<a class="reference internal" href="_modules/lupyne/engine/indexers.html#IndexSearcher.reopen"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.indexers.IndexSearcher.reopen" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return current <a class="reference internal" href="#indexsearcher">IndexSearcher</a>, only creating a new one if necessary.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>spellcheckers</strong> – refresh cached <a class="reference internal" href="#lupyne.engine.indexers.IndexSearcher.spellcheckers" title="lupyne.engine.indexers.IndexSearcher.spellcheckers"><code class="xref py py-attr docutils literal notranslate"><span class="pre">spellcheckers</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.indexers.IndexSearcher.search">
+<code class="sig-name descname">search</code><span class="sig-paren">(</span><em class="sig-param">query=None</em>, <em class="sig-param">count=None</em>, <em class="sig-param">sort=None</em>, <em class="sig-param">reverse=False</em>, <em class="sig-param">scores=False</em>, <em class="sig-param">mincount=1000</em>, <em class="sig-param">timeout=None</em>, <em class="sig-param">**parser</em><span class="sig-paren">)</span> &#x2192; lupyne.engine.documents.Hits<a class="reference internal" href="_modules/lupyne/engine/indexers.html#IndexSearcher.search"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.indexers.IndexSearcher.search" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run query and return <a class="reference internal" href="#hits">Hits</a>.</p>
+<div class="versionchanged">
+<p><span class="versionmodified changed">Changed in version 1.4: </span>sort param for lucene only; use Hits.sorted with a callable</p>
+</div>
+<div class="versionchanged">
+<p><span class="versionmodified changed">Changed in version 2.3: </span>maxscore option removed; use Hits.maxscore property</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>query</strong> – query string or lucene Query</p></li>
+<li><p><strong>count</strong> – maximum number of hits to retrieve</p></li>
+<li><p><strong>sort</strong> – lucene Sort parameters</p></li>
+<li><p><strong>reverse</strong> – reverse flag used with sort</p></li>
+<li><p><strong>scores</strong> – compute scores for candidate results when sorting</p></li>
+<li><p><strong>mincount</strong> – total hit count accuracy threshold</p></li>
+<li><p><strong>timeout</strong> – stop search after elapsed number of seconds</p></li>
+<li><p><strong>parser</strong> – <code class="xref py py-meth docutils literal notranslate"><span class="pre">Analyzer.parse()</span></code> options</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.indexers.IndexSearcher.spans">
+<code class="sig-name descname">spans</code><span class="sig-paren">(</span><em class="sig-param">query: org.apache.lucene.search.spans.SpanQuery</em>, <em class="sig-param">positions=False</em><span class="sig-paren">)</span> &#x2192; Iterator[tuple]<a class="reference internal" href="_modules/lupyne/engine/indexers.html#IndexSearcher.spans"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.indexers.IndexSearcher.spans" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate docs with occurrence counts for a span query.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>query</strong> – lucene SpanQuery</p></li>
+<li><p><strong>positions</strong> – optionally include slice positions instead of counts</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.indexers.IndexSearcher.spellchecker">
+<code class="sig-name descname">spellchecker</code><span class="sig-paren">(</span><em class="sig-param">field: str</em><span class="sig-paren">)</span> &#x2192; lupyne.engine.utils.SpellChecker<a class="reference internal" href="_modules/lupyne/engine/indexers.html#IndexSearcher.spellchecker"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.indexers.IndexSearcher.spellchecker" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return and cache spellchecker for given field.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="multisearcher">
+<h3>MultiSearcher<a class="headerlink" href="#multisearcher" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="lupyne.engine.indexers.MultiSearcher">
+<em class="property">class </em><code class="sig-prename descclassname">lupyne.engine.indexers.</code><code class="sig-name descname">MultiSearcher</code><span class="sig-paren">(</span><em class="sig-param">reader</em>, <em class="sig-param">analyzer=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lupyne/engine/indexers.html#MultiSearcher"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.indexers.MultiSearcher" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#lupyne.engine.indexers.IndexSearcher" title="lupyne.engine.indexers.IndexSearcher"><code class="xref py py-class docutils literal notranslate"><span class="pre">lupyne.engine.indexers.IndexSearcher</span></code></a></p>
+<p>IndexSearcher with underlying lucene MultiReader.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>reader</strong> – directory paths, Directories, IndexReaders, or a single MultiReader</p></li>
+<li><p><strong>analyzer</strong> – lucene Analyzer, default StandardAnalyzer</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="indexwriter">
+<h3>IndexWriter<a class="headerlink" href="#indexwriter" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="lupyne.engine.indexers.IndexWriter">
+<em class="property">class </em><code class="sig-prename descclassname">lupyne.engine.indexers.</code><code class="sig-name descname">IndexWriter</code><span class="sig-paren">(</span><em class="sig-param">directory=None</em>, <em class="sig-param">mode: str = 'a'</em>, <em class="sig-param">analyzer=None</em>, <em class="sig-param">version=None</em>, <em class="sig-param">**attrs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lupyne/engine/indexers.html#IndexWriter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.indexers.IndexWriter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Inherited lucene IndexWriter.</p>
+<p>Supports setting fields parameters explicitly, so documents can be represented as dictionaries.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>directory</strong> – directory path or lucene Directory, default RAMDirectory</p></li>
+<li><p><strong>mode</strong> – file mode (rwa), except updating (+) is implied</p></li>
+<li><p><strong>analyzer</strong> – lucene Analyzer, default StandardAnalyzer</p></li>
+<li><p><strong>version</strong> – lucene Version argument passed to IndexWriterConfig, default is latest</p></li>
+<li><p><strong>attrs</strong> – additional attributes to set on IndexWriterConfig</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="attribute">
+<dt id="lupyne.engine.indexers.IndexWriter.fields">
+<code class="sig-name descname">fields</code><a class="headerlink" href="#lupyne.engine.indexers.IndexWriter.fields" title="Permalink to this definition">¶</a></dt>
+<dd><p>Mapping of assigned fields.  May be used directly, instead of <a class="reference internal" href="#lupyne.engine.indexers.IndexWriter.set" title="lupyne.engine.indexers.IndexWriter.set"><code class="xref py py-meth docutils literal notranslate"><span class="pre">set()</span></code></a> method, for further customization.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.indexers.IndexWriter.__del__">
+<code class="sig-name descname">__del__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/lupyne/engine/indexers.html#IndexWriter.__del__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.indexers.IndexWriter.__del__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Closes index.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.indexers.IndexWriter.__len__">
+<code class="sig-name descname">__len__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/lupyne/engine/indexers.html#IndexWriter.__len__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.indexers.IndexWriter.__len__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.indexers.IndexWriter.__iadd__">
+<code class="sig-name descname">__iadd__</code><span class="sig-paren">(</span><em class="sig-param">directory</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lupyne/engine/indexers.html#IndexWriter.__iadd__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.indexers.IndexWriter.__iadd__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add directory (or reader, searcher, writer) to index.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.indexers.IndexWriter.add">
+<code class="sig-name descname">add</code><span class="sig-paren">(</span><em class="sig-param">document=()</em>, <em class="sig-param">**terms</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lupyne/engine/indexers.html#IndexWriter.add"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.indexers.IndexWriter.add" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add <a class="reference internal" href="#lupyne.engine.indexers.IndexWriter.document" title="lupyne.engine.indexers.IndexWriter.document"><code class="xref py py-meth docutils literal notranslate"><span class="pre">document()</span></code></a> to index with optional boost.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.indexers.IndexWriter.check">
+<em class="property">classmethod </em><code class="sig-name descname">check</code><span class="sig-paren">(</span><em class="sig-param">directory</em>, <em class="sig-param">fix=False</em><span class="sig-paren">)</span> &#x2192; org.apache.lucene.index.CheckIndex$Status<a class="reference internal" href="_modules/lupyne/engine/indexers.html#IndexWriter.check"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.indexers.IndexWriter.check" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check and optionally fix unlocked index, returning lucene CheckIndex.Status.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.indexers.IndexWriter.delete">
+<code class="sig-name descname">delete</code><span class="sig-paren">(</span><em class="sig-param">*query</em>, <em class="sig-param">**options</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lupyne/engine/indexers.html#IndexWriter.delete"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.indexers.IndexWriter.delete" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove documents which match given query or term.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>query</strong> – <a class="reference internal" href="#lupyne.engine.indexers.IndexSearcher.search" title="lupyne.engine.indexers.IndexSearcher.search"><code class="xref py py-meth docutils literal notranslate"><span class="pre">IndexSearcher.search()</span></code></a> compatible query, or optimally a name and value</p></li>
+<li><p><strong>options</strong> – additional <code class="xref py py-meth docutils literal notranslate"><span class="pre">Analyzer.parse()</span></code> options</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.indexers.IndexWriter.document">
+<code class="sig-name descname">document</code><span class="sig-paren">(</span><em class="sig-param">items=()</em>, <em class="sig-param">**terms</em><span class="sig-paren">)</span> &#x2192; org.apache.lucene.document.Document<a class="reference internal" href="_modules/lupyne/engine/indexers.html#IndexWriter.document"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.indexers.IndexWriter.document" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return lucene Document from mapping of field names to one or multiple values.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.indexers.IndexWriter.set">
+<code class="sig-name descname">set</code><span class="sig-paren">(</span><em class="sig-param">name: str</em>, <em class="sig-param">cls=&lt;class 'lupyne.engine.documents.Field'&gt;</em>, <em class="sig-param">**settings</em><span class="sig-paren">)</span> &#x2192; lupyne.engine.documents.Field<a class="reference internal" href="_modules/lupyne/engine/indexers.html#IndexWriter.set"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.indexers.IndexWriter.set" title="Permalink to this definition">¶</a></dt>
+<dd><p>Assign settings to field name and return the field.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> – registered name of field</p></li>
+<li><p><strong>cls</strong> – optional <a class="reference internal" href="#field">Field</a> constructor</p></li>
+<li><p><strong>settings</strong> – stored, indexed, etc. options compatible with <a class="reference internal" href="#field">Field</a></p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.indexers.IndexWriter.snapshot">
+<code class="sig-name descname">snapshot</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/lupyne/engine/indexers.html#IndexWriter.snapshot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.indexers.IndexWriter.snapshot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return context manager of an index commit snapshot.</p>
+<div class="versionchanged">
+<p><span class="versionmodified changed">Changed in version 1.4: </span>lucene identifies snapshots by commit generation</p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.indexers.IndexWriter.update">
+<code class="sig-name descname">update</code><span class="sig-paren">(</span><em class="sig-param">name: str</em>, <em class="sig-param">value=''</em>, <em class="sig-param">document=()</em>, <em class="sig-param">**terms</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lupyne/engine/indexers.html#IndexWriter.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.indexers.IndexWriter.update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Atomically delete documents which match given term and add the new <a class="reference internal" href="#lupyne.engine.indexers.IndexWriter.document" title="lupyne.engine.indexers.IndexWriter.document"><code class="xref py py-meth docutils literal notranslate"><span class="pre">document()</span></code></a>.</p>
+<div class="versionchanged">
+<p><span class="versionmodified changed">Changed in version 1.7: </span>update in-place if only DocValues are given</p>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="indexer">
+<h3>Indexer<a class="headerlink" href="#indexer" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="lupyne.engine.indexers.Indexer">
+<em class="property">class </em><code class="sig-prename descclassname">lupyne.engine.indexers.</code><code class="sig-name descname">Indexer</code><span class="sig-paren">(</span><em class="sig-param">directory=None</em>, <em class="sig-param">mode='a'</em>, <em class="sig-param">analyzer=None</em>, <em class="sig-param">version=None</em>, <em class="sig-param">nrt=False</em>, <em class="sig-param">**attrs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lupyne/engine/indexers.html#Indexer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.indexers.Indexer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#lupyne.engine.indexers.IndexWriter" title="lupyne.engine.indexers.IndexWriter"><code class="xref py py-class docutils literal notranslate"><span class="pre">lupyne.engine.indexers.IndexWriter</span></code></a></p>
+<p>An all-purpose interface to an index.</p>
+<p>Creates an <a class="reference internal" href="#indexwriter">IndexWriter</a> with a delegated <a class="reference internal" href="#indexsearcher">IndexSearcher</a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>nrt</strong> – optionally use a near real-time searcher</p>
+</dd>
+</dl>
+<dl class="method">
+<dt id="lupyne.engine.indexers.Indexer.commit">
+<code class="sig-name descname">commit</code><span class="sig-paren">(</span><em class="sig-param">merge=False</em>, <em class="sig-param">**caches</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lupyne/engine/indexers.html#Indexer.commit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.indexers.Indexer.commit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Commit writes and <a class="reference internal" href="#lupyne.engine.indexers.Indexer.refresh" title="lupyne.engine.indexers.Indexer.refresh"><code class="xref py py-meth docutils literal notranslate"><span class="pre">refresh()</span></code></a> searcher.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>merge</strong> – merge segments with deletes, or optionally specify maximum number of segments</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.indexers.Indexer.refresh">
+<code class="sig-name descname">refresh</code><span class="sig-paren">(</span><em class="sig-param">**caches</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lupyne/engine/indexers.html#Indexer.refresh"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.indexers.Indexer.refresh" title="Permalink to this definition">¶</a></dt>
+<dd><p>Store refreshed searcher with <a class="reference internal" href="#lupyne.engine.indexers.IndexSearcher.reopen" title="lupyne.engine.indexers.IndexSearcher.reopen"><code class="xref py py-meth docutils literal notranslate"><span class="pre">IndexSearcher.reopen()</span></code></a> caches.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+<div class="section" id="module-lupyne.engine.documents">
+<span id="documents"></span><h2>documents<a class="headerlink" href="#module-lupyne.engine.documents" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="document">
+<h3>Document<a class="headerlink" href="#document" title="Permalink to this headline">¶</a></h3>
+<div class="versionchanged">
+<p><span class="versionmodified changed">Changed in version 1.5: </span>stored numeric types returned as numbers</p>
+</div>
+<dl class="class">
+<dt id="lupyne.engine.documents.Document">
+<em class="property">class </em><code class="sig-prename descclassname">lupyne.engine.documents.</code><code class="sig-name descname">Document</code><span class="sig-paren">(</span><em class="sig-param">doc: org.apache.lucene.document.Document</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lupyne/engine/documents.html#Document"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.documents.Document" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#lupyne.engine.documents.Document.dict" title="lupyne.engine.documents.Document.dict"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a></p>
+<p>Multimapping of field names to values, but default getters return the first value.</p>
+<dl class="method">
+<dt id="lupyne.engine.documents.Document.dict">
+<code class="sig-name descname">dict</code><span class="sig-paren">(</span><em class="sig-param">*names: str</em>, <em class="sig-param">**defaults</em><span class="sig-paren">)</span> &#x2192; dict<a class="reference internal" href="_modules/lupyne/engine/documents.html#Document.dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.documents.Document.dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return dict representation of document.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>names</strong> – names of multi-valued fields to return as a list</p></li>
+<li><p><strong>defaults</strong> – include only given fields, using default values as necessary</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.documents.Document.get">
+<code class="sig-name descname">get</code><span class="sig-paren">(</span><em class="sig-param">name: str</em>, <em class="sig-param">default=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lupyne/engine/documents.html#Document.get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.documents.Document.get" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the value for key if key is in the dictionary, else default.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.documents.Document.getlist">
+<code class="sig-name descname">getlist</code><span class="sig-paren">(</span><em class="sig-param">name: str</em><span class="sig-paren">)</span> &#x2192; list<a class="reference internal" href="_modules/lupyne/engine/documents.html#Document.getlist"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.documents.Document.getlist" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return list of all values for given field.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="hit">
+<h3>Hit<a class="headerlink" href="#hit" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="lupyne.engine.documents.Hit">
+<em class="property">class </em><code class="sig-prename descclassname">lupyne.engine.documents.</code><code class="sig-name descname">Hit</code><span class="sig-paren">(</span><em class="sig-param">doc: org.apache.lucene.document.Document</em>, <em class="sig-param">id: int</em>, <em class="sig-param">score: float</em>, <em class="sig-param">sortkeys=()</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lupyne/engine/documents.html#Hit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.documents.Hit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#lupyne.engine.documents.Document" title="lupyne.engine.documents.Document"><code class="xref py py-class docutils literal notranslate"><span class="pre">lupyne.engine.documents.Document</span></code></a></p>
+<p>A Document from a search result, with <code class="xref py py-attr docutils literal notranslate"><span class="pre">id</span></code>, <code class="xref py py-attr docutils literal notranslate"><span class="pre">score</span></code>, and optional <code class="xref py py-attr docutils literal notranslate"><span class="pre">sortkeys</span></code>.</p>
+<div class="versionchanged">
+<p><span class="versionmodified changed">Changed in version 2.4: </span>keys renamed to <code class="xref py py-attr docutils literal notranslate"><span class="pre">sortkeys</span></code></p>
+</div>
+<dl class="method">
+<dt id="lupyne.engine.documents.Hit.dict">
+<code class="sig-name descname">dict</code><span class="sig-paren">(</span><em class="sig-param">*names: str</em>, <em class="sig-param">**defaults</em><span class="sig-paren">)</span> &#x2192; dict<a class="reference internal" href="_modules/lupyne/engine/documents.html#Hit.dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.documents.Hit.dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return dict representation of document with __id__, __score__, and any sort __keys__.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="hits">
+<h3>Hits<a class="headerlink" href="#hits" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="lupyne.engine.documents.Hits">
+<em class="property">class </em><code class="sig-prename descclassname">lupyne.engine.documents.</code><code class="sig-name descname">Hits</code><span class="sig-paren">(</span><em class="sig-param">searcher</em>, <em class="sig-param">scoredocs: Sequence</em>, <em class="sig-param">count=0</em>, <em class="sig-param">fields=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lupyne/engine/documents.html#Hits"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.documents.Hits" title="Permalink to this definition">¶</a></dt>
+<dd><p>Search results: lazily evaluated and memory efficient.</p>
+<p>Provides a read-only sequence interface to hit objects.
+.. versionchanged:: 2.3 maxscore option removed; computed property instead</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>searcher</strong> – <a class="reference internal" href="#indexsearcher">IndexSearcher</a> which can retrieve documents</p></li>
+<li><p><strong>scoredocs</strong> – lucene ScoreDocs</p></li>
+<li><p><strong>count</strong> – total number of hits; float indicates estimate</p></li>
+<li><p><strong>fields</strong> – optional field selectors</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="method">
+<dt id="lupyne.engine.documents.Hits.__len__">
+<code class="sig-name descname">__len__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/lupyne/engine/documents.html#Hits.__len__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.documents.Hits.__len__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.documents.Hits.__getitem__">
+<code class="sig-name descname">__getitem__</code><span class="sig-paren">(</span><em class="sig-param">index</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lupyne/engine/documents.html#Hits.__getitem__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.documents.Hits.__getitem__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.documents.Hits.docvalues">
+<code class="sig-name descname">docvalues</code><span class="sig-paren">(</span><em class="sig-param">field: str</em>, <em class="sig-param">type=None</em><span class="sig-paren">)</span> &#x2192; dict<a class="reference internal" href="_modules/lupyne/engine/documents.html#Hits.docvalues"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.documents.Hits.docvalues" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return mapping of docs to docvalues.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.documents.Hits.filter">
+<code class="sig-name descname">filter</code><span class="sig-paren">(</span><em class="sig-param">func: Callable</em><span class="sig-paren">)</span> &#x2192; lupyne.engine.documents.Hits<a class="reference internal" href="_modules/lupyne/engine/documents.html#Hits.filter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.documents.Hits.filter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return <a class="reference internal" href="#hits">Hits</a> filtered by function applied to doc ids.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.documents.Hits.groupby">
+<code class="sig-name descname">groupby</code><span class="sig-paren">(</span><em class="sig-param">func: Callable</em>, <em class="sig-param">count: int = None</em>, <em class="sig-param">docs: int = None</em><span class="sig-paren">)</span> &#x2192; lupyne.engine.documents.Groups<a class="reference internal" href="_modules/lupyne/engine/documents.html#Hits.groupby"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.documents.Hits.groupby" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return ordered list of <a class="reference internal" href="#hits">Hits</a> grouped by value of function applied to doc ids.</p>
+<p>Optionally limit the number of groups and docs per group.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.documents.Hits.highlights">
+<code class="sig-name descname">highlights</code><span class="sig-paren">(</span><em class="sig-param">query: org.apache.lucene.search.Query</em>, <em class="sig-param">**fields: int</em><span class="sig-paren">)</span> &#x2192; Iterator[dict]<a class="reference internal" href="_modules/lupyne/engine/documents.html#Hits.highlights"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.documents.Hits.highlights" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate highlighted fields for each hit.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>query</strong> – lucene Query</p></li>
+<li><p><strong>field</strong> – mapping of fields to maxinum number of passages</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.documents.Hits.items">
+<code class="sig-name descname">items</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; Iterator[tuple]<a class="reference internal" href="_modules/lupyne/engine/documents.html#Hits.items"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.documents.Hits.items" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate zipped ids and scores.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.documents.Hits.maxscore">
+<em class="property">property </em><code class="sig-name descname">maxscore</code><a class="headerlink" href="#lupyne.engine.documents.Hits.maxscore" title="Permalink to this definition">¶</a></dt>
+<dd><p>max score of present hits; not necessarily of all matches</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.documents.Hits.select">
+<code class="sig-name descname">select</code><span class="sig-paren">(</span><em class="sig-param">*fields: str</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lupyne/engine/documents.html#Hits.select"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.documents.Hits.select" title="Permalink to this definition">¶</a></dt>
+<dd><p>Only load selected fields.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.documents.Hits.sorted">
+<code class="sig-name descname">sorted</code><span class="sig-paren">(</span><em class="sig-param">key: Callable</em>, <em class="sig-param">reverse=False</em><span class="sig-paren">)</span> &#x2192; lupyne.engine.documents.Hits<a class="reference internal" href="_modules/lupyne/engine/documents.html#Hits.sorted"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.documents.Hits.sorted" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return <a class="reference internal" href="#hits">Hits</a> sorted by key function applied to doc ids.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="groups">
+<h3>Groups<a class="headerlink" href="#groups" title="Permalink to this headline">¶</a></h3>
+<div class="versionadded">
+<p><span class="versionmodified added">New in version 1.6.</span></p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This interface is experimental and might change in incompatible ways in the next release.</p>
+</div>
+<dl class="class">
+<dt id="lupyne.engine.documents.Groups">
+<em class="property">class </em><code class="sig-prename descclassname">lupyne.engine.documents.</code><code class="sig-name descname">Groups</code><span class="sig-paren">(</span><em class="sig-param">searcher</em>, <em class="sig-param">groupdocs: Sequence</em>, <em class="sig-param">count: int = 0</em>, <em class="sig-param">fields=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lupyne/engine/documents.html#Groups"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.documents.Groups" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sequence of grouped <a class="reference internal" href="#hits">Hits</a>.</p>
+<dl class="method">
+<dt id="lupyne.engine.documents.Groups.__len__">
+<code class="sig-name descname">__len__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/lupyne/engine/documents.html#Groups.__len__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.documents.Groups.__len__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.documents.Groups.__getitem__">
+<code class="sig-name descname">__getitem__</code><span class="sig-paren">(</span><em class="sig-param">index</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lupyne/engine/documents.html#Groups.__getitem__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.documents.Groups.__getitem__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.documents.Groups.facets">
+<em class="property">property </em><code class="sig-name descname">facets</code><a class="headerlink" href="#lupyne.engine.documents.Groups.facets" title="Permalink to this definition">¶</a></dt>
+<dd><p>mapping of field values and counts</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.documents.Groups.select">
+<code class="sig-name descname">select</code><span class="sig-paren">(</span><em class="sig-param">*fields: str</em><span class="sig-paren">)</span><a class="headerlink" href="#lupyne.engine.documents.Groups.select" title="Permalink to this definition">¶</a></dt>
+<dd><p>Only load selected fields.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="groupingsearch">
+<h3>GroupingSearch<a class="headerlink" href="#groupingsearch" title="Permalink to this headline">¶</a></h3>
+<div class="versionadded">
+<p><span class="versionmodified added">New in version 1.5.</span></p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This interface is experimental and might change in incompatible ways in the next release.</p>
+</div>
+<dl class="class">
+<dt id="lupyne.engine.documents.GroupingSearch">
+<em class="property">class </em><code class="sig-prename descclassname">lupyne.engine.documents.</code><code class="sig-name descname">GroupingSearch</code><span class="sig-paren">(</span><em class="sig-param">field: str</em>, <em class="sig-param">sort=None</em>, <em class="sig-param">cache=True</em>, <em class="sig-param">**attrs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lupyne/engine/documents.html#GroupingSearch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.documents.GroupingSearch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Inherited lucene GroupingSearch with optimized faceting.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>field</strong> – unique field name to group by</p></li>
+<li><p><strong>sort</strong> – lucene Sort to order groups and docs</p></li>
+<li><p><strong>cache</strong> – use unlimited caching</p></li>
+<li><p><strong>attrs</strong> – additional attributes to set</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="method">
+<dt id="lupyne.engine.documents.GroupingSearch.__len__">
+<code class="sig-name descname">__len__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/lupyne/engine/documents.html#GroupingSearch.__len__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.documents.GroupingSearch.__len__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.documents.GroupingSearch.__iter__">
+<code class="sig-name descname">__iter__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/lupyne/engine/documents.html#GroupingSearch.__iter__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.documents.GroupingSearch.__iter__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.documents.GroupingSearch.search">
+<code class="sig-name descname">search</code><span class="sig-paren">(</span><em class="sig-param">searcher</em>, <em class="sig-param">query: org.apache.lucene.search.Query</em>, <em class="sig-param">count: int = None</em>, <em class="sig-param">start: int = 0</em><span class="sig-paren">)</span> &#x2192; lupyne.engine.documents.Groups<a class="reference internal" href="_modules/lupyne/engine/documents.html#GroupingSearch.search"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.documents.GroupingSearch.search" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run query and return <a class="reference internal" href="#groups">Groups</a>.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="field">
+<h3>Field<a class="headerlink" href="#field" title="Permalink to this headline">¶</a></h3>
+<div class="versionchanged">
+<p><span class="versionmodified changed">Changed in version 1.6: </span>lucene Field.{Store,Index,TermVector} dropped in favor of FieldType attributes</p>
+</div>
+<dl class="class">
+<dt id="lupyne.engine.documents.Field">
+<em class="property">class </em><code class="sig-prename descclassname">lupyne.engine.documents.</code><code class="sig-name descname">Field</code><span class="sig-paren">(</span><em class="sig-param">name: str</em>, <em class="sig-param">docValuesType=''</em>, <em class="sig-param">indexOptions=''</em>, <em class="sig-param">dimensions=0</em>, <em class="sig-param">**settings</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lupyne/engine/documents.html#Field"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.documents.Field" title="Permalink to this definition">¶</a></dt>
+<dd><p>Saved parameters which can generate lucene Fields given values.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> – name of field</p></li>
+<li><p><strong>boost</strong> – boost factor</p></li>
+<li><p><strong>indexed</strong><strong>, </strong><strong>settings</strong> (<em>stored</em><em>,</em>) – lucene FieldType attributes</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="method">
+<dt id="lupyne.engine.documents.Field.String">
+<em class="property">classmethod </em><code class="sig-name descname">String</code><span class="sig-paren">(</span><em class="sig-param">name: str</em>, <em class="sig-param">tokenized=False</em>, <em class="sig-param">omitNorms=True</em>, <em class="sig-param">indexOptions='DOCS'</em>, <em class="sig-param">**settings</em><span class="sig-paren">)</span> &#x2192; lupyne.engine.documents.Field<a class="reference internal" href="_modules/lupyne/engine/documents.html#Field.String"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.documents.Field.String" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return Field with default settings for strings.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.documents.Field.Text">
+<em class="property">classmethod </em><code class="sig-name descname">Text</code><span class="sig-paren">(</span><em class="sig-param">name: str</em>, <em class="sig-param">indexOptions='DOCS_AND_FREQS_AND_POSITIONS'</em>, <em class="sig-param">**settings</em><span class="sig-paren">)</span> &#x2192; lupyne.engine.documents.Field<a class="reference internal" href="_modules/lupyne/engine/documents.html#Field.Text"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.documents.Field.Text" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return Field with default settings for text.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.documents.Field.items">
+<code class="sig-name descname">items</code><span class="sig-paren">(</span><em class="sig-param">*values</em><span class="sig-paren">)</span> &#x2192; Iterator[org.apache.lucene.document.Field]<a class="reference internal" href="_modules/lupyne/engine/documents.html#Field.items"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.documents.Field.items" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate lucene Fields suitable for adding to a document.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.documents.Field.settings">
+<em class="property">property </em><code class="sig-name descname">settings</code><a class="headerlink" href="#lupyne.engine.documents.Field.settings" title="Permalink to this definition">¶</a></dt>
+<dd><p>dict representation of settings</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="nestedfield">
+<h3>NestedField<a class="headerlink" href="#nestedfield" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="lupyne.engine.documents.NestedField">
+<em class="property">class </em><code class="sig-prename descclassname">lupyne.engine.documents.</code><code class="sig-name descname">NestedField</code><span class="sig-paren">(</span><em class="sig-param">name: str</em>, <em class="sig-param">sep: str = '.'</em>, <em class="sig-param">**settings</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lupyne/engine/documents.html#NestedField"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.documents.NestedField" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#lupyne.engine.documents.Field" title="lupyne.engine.documents.Field"><code class="xref py py-class docutils literal notranslate"><span class="pre">lupyne.engine.documents.Field</span></code></a></p>
+<p>Field which indexes every component into its own field.</p>
+<p>Original value may be stored for convenience.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>sep</strong> – field separator used on name and values</p>
+</dd>
+</dl>
+<dl class="method">
+<dt id="lupyne.engine.documents.NestedField.items">
+<code class="sig-name descname">items</code><span class="sig-paren">(</span><em class="sig-param">*values: str</em><span class="sig-paren">)</span> &#x2192; Iterator[org.apache.lucene.document.Field]<a class="reference internal" href="_modules/lupyne/engine/documents.html#NestedField.items"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.documents.NestedField.items" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate indexed component fields.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.documents.NestedField.prefix">
+<code class="sig-name descname">prefix</code><span class="sig-paren">(</span><em class="sig-param">value: str</em><span class="sig-paren">)</span> &#x2192; lupyne.engine.queries.Query<a class="reference internal" href="_modules/lupyne/engine/documents.html#NestedField.prefix"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.documents.NestedField.prefix" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return prefix query of the closest possible prefixed field.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.documents.NestedField.range">
+<code class="sig-name descname">range</code><span class="sig-paren">(</span><em class="sig-param">start</em>, <em class="sig-param">stop</em>, <em class="sig-param">lower=True</em>, <em class="sig-param">upper=False</em><span class="sig-paren">)</span> &#x2192; lupyne.engine.queries.Query<a class="reference internal" href="_modules/lupyne/engine/documents.html#NestedField.range"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.documents.NestedField.range" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return range query of the closest possible prefixed field.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.documents.NestedField.values">
+<code class="sig-name descname">values</code><span class="sig-paren">(</span><em class="sig-param">value: str</em><span class="sig-paren">)</span> &#x2192; Iterator[str]<a class="reference internal" href="_modules/lupyne/engine/documents.html#NestedField.values"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.documents.NestedField.values" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate component field values in order.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="datetimefield">
+<h3>DateTimeField<a class="headerlink" href="#datetimefield" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="lupyne.engine.documents.DateTimeField">
+<em class="property">class </em><code class="sig-prename descclassname">lupyne.engine.documents.</code><code class="sig-name descname">DateTimeField</code><span class="sig-paren">(</span><em class="sig-param">name: str</em>, <em class="sig-param">dimensions: int = 1</em>, <em class="sig-param">**settings</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lupyne/engine/documents.html#DateTimeField"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.documents.DateTimeField" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#lupyne.engine.documents.Field" title="lupyne.engine.documents.Field"><code class="xref py py-class docutils literal notranslate"><span class="pre">lupyne.engine.documents.Field</span></code></a></p>
+<p>Field which indexes datetimes as Point fields of timestamps.</p>
+<p>Supports datetimes, dates, and any prefix of time tuples.</p>
+<dl class="method">
+<dt id="lupyne.engine.documents.DateTimeField.duration">
+<code class="sig-name descname">duration</code><span class="sig-paren">(</span><em class="sig-param">date</em>, <em class="sig-param">days=0</em>, <em class="sig-param">**delta</em><span class="sig-paren">)</span> &#x2192; lupyne.engine.queries.Query<a class="reference internal" href="_modules/lupyne/engine/documents.html#DateTimeField.duration"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.documents.DateTimeField.duration" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return date range query within time span of date.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>date</strong> – origin date or tuple</p></li>
+<li><p><strong>days</strong><strong>,</strong><strong>delta</strong> – timedelta parameters</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.documents.DateTimeField.items">
+<code class="sig-name descname">items</code><span class="sig-paren">(</span><em class="sig-param">*dates</em><span class="sig-paren">)</span> &#x2192; Iterator[org.apache.lucene.document.Field]<a class="reference internal" href="_modules/lupyne/engine/documents.html#DateTimeField.items"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.documents.DateTimeField.items" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate lucene NumericFields of timestamps.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.documents.DateTimeField.prefix">
+<code class="sig-name descname">prefix</code><span class="sig-paren">(</span><em class="sig-param">date</em><span class="sig-paren">)</span> &#x2192; lupyne.engine.queries.Query<a class="reference internal" href="_modules/lupyne/engine/documents.html#DateTimeField.prefix"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.documents.DateTimeField.prefix" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return range query which matches the date prefix.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.documents.DateTimeField.range">
+<code class="sig-name descname">range</code><span class="sig-paren">(</span><em class="sig-param">start</em>, <em class="sig-param">stop</em>, <em class="sig-param">**inclusive</em><span class="sig-paren">)</span> &#x2192; lupyne.engine.queries.Query<a class="reference internal" href="_modules/lupyne/engine/documents.html#DateTimeField.range"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.documents.DateTimeField.range" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return NumericRangeQuery of timestamps.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.documents.DateTimeField.timestamp">
+<em class="property">classmethod </em><code class="sig-name descname">timestamp</code><span class="sig-paren">(</span><em class="sig-param">date</em><span class="sig-paren">)</span> &#x2192; float<a class="reference internal" href="_modules/lupyne/engine/documents.html#DateTimeField.timestamp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.documents.DateTimeField.timestamp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return utc timestamp from date or time tuple.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.documents.DateTimeField.within">
+<code class="sig-name descname">within</code><span class="sig-paren">(</span><em class="sig-param">days=0</em>, <em class="sig-param">weeks=0</em>, <em class="sig-param">utc=True</em>, <em class="sig-param">**delta</em><span class="sig-paren">)</span> &#x2192; lupyne.engine.queries.Query<a class="reference internal" href="_modules/lupyne/engine/documents.html#DateTimeField.within"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.documents.DateTimeField.within" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return date range query within current time and delta.</p>
+<p>If the delta is an exact number of days, then dates will be used.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>days</strong><strong>,</strong><strong>weeks</strong> – number of days to offset from today</p></li>
+<li><p><strong>utc</strong> – optionally use utc instead of local time</p></li>
+<li><p><strong>delta</strong> – additional timedelta parameters</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="spatialfield">
+<h3>SpatialField<a class="headerlink" href="#spatialfield" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="lupyne.engine.documents.SpatialField">
+<em class="property">class </em><code class="sig-prename descclassname">lupyne.engine.documents.</code><code class="sig-name descname">SpatialField</code><span class="sig-paren">(</span><em class="sig-param">name: str</em>, <em class="sig-param">dimensions: int = 1</em>, <em class="sig-param">**settings</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lupyne/engine/documents.html#SpatialField"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.documents.SpatialField" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#lupyne.engine.documents.Field" title="lupyne.engine.documents.Field"><code class="xref py py-class docutils literal notranslate"><span class="pre">lupyne.engine.documents.Field</span></code></a></p>
+<p>Geospatial points, indexed with optional docvalues.</p>
+<dl class="method">
+<dt id="lupyne.engine.documents.SpatialField.distances">
+<code class="sig-name descname">distances</code><span class="sig-paren">(</span><em class="sig-param">lng: str</em>, <em class="sig-param">lat: str</em><span class="sig-paren">)</span> &#x2192; org.apache.lucene.search.Query<a class="reference internal" href="_modules/lupyne/engine/documents.html#SpatialField.distances"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.documents.SpatialField.distances" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return distance SortField.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.documents.SpatialField.items">
+<code class="sig-name descname">items</code><span class="sig-paren">(</span><em class="sig-param">*points: tuple</em><span class="sig-paren">)</span> &#x2192; Iterator[org.apache.lucene.document.Field]<a class="reference internal" href="_modules/lupyne/engine/documents.html#SpatialField.items"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.documents.SpatialField.items" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate lucene LatLon fields from points (lng, lat).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.documents.SpatialField.within">
+<code class="sig-name descname">within</code><span class="sig-paren">(</span><em class="sig-param">lng: float</em>, <em class="sig-param">lat: float</em>, <em class="sig-param">distance: float</em><span class="sig-paren">)</span> &#x2192; org.apache.lucene.search.Query<a class="reference internal" href="_modules/lupyne/engine/documents.html#SpatialField.within"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.documents.SpatialField.within" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return range queries for any tiles which could be within distance of given point.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lng</strong><strong>,</strong><strong>lat</strong> – point</p></li>
+<li><p><strong>distance</strong> – search radius in meters</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+<div class="section" id="module-lupyne.engine.queries">
+<span id="queries"></span><h2>queries<a class="headerlink" href="#module-lupyne.engine.queries" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="query">
+<h3>Query<a class="headerlink" href="#query" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="lupyne.engine.queries.Query">
+<em class="property">class </em><code class="sig-prename descclassname">lupyne.engine.queries.</code><code class="sig-name descname">Query</code><span class="sig-paren">(</span><em class="sig-param">base: org.apache.lucene.search.Query</em>, <em class="sig-param">*args</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lupyne/engine/queries.html#Query"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.queries.Query" title="Permalink to this definition">¶</a></dt>
+<dd><p>Inherited lucene Query, with dynamic base class acquisition.</p>
+<p>Uses class methods and operator overloading for convenient query construction.</p>
+<dl class="method">
+<dt id="lupyne.engine.queries.Query.__and__">
+<code class="sig-name descname">__and__</code><span class="sig-paren">(</span><em class="sig-param">other: org.apache.lucene.search.Query</em><span class="sig-paren">)</span> &#x2192; lupyne.engine.queries.Query<a class="reference internal" href="_modules/lupyne/engine/queries.html#Query.__and__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.queries.Query.__and__" title="Permalink to this definition">¶</a></dt>
+<dd><p>+self +other</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.queries.Query.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param">base: org.apache.lucene.search.Query</em>, <em class="sig-param">*args</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lupyne/engine/queries.html#Query.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.queries.Query.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.queries.Query.__neg__">
+<code class="sig-name descname">__neg__</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; lupyne.engine.queries.Query<a class="reference internal" href="_modules/lupyne/engine/queries.html#Query.__neg__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.queries.Query.__neg__" title="Permalink to this definition">¶</a></dt>
+<dd><p>-self</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.queries.Query.__new__">
+<em class="property">static </em><code class="sig-name descname">__new__</code><span class="sig-paren">(</span><em class="sig-param">cls</em>, <em class="sig-param">base</em>, <em class="sig-param">*args</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lupyne/engine/queries.html#Query.__new__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.queries.Query.__new__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create and return a new object.  See help(type) for accurate signature.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.queries.Query.__or__">
+<code class="sig-name descname">__or__</code><span class="sig-paren">(</span><em class="sig-param">other: org.apache.lucene.search.Query</em><span class="sig-paren">)</span> &#x2192; lupyne.engine.queries.Query<a class="reference internal" href="_modules/lupyne/engine/queries.html#Query.__or__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.queries.Query.__or__" title="Permalink to this definition">¶</a></dt>
+<dd><p>self other</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.queries.Query.__pos__">
+<code class="sig-name descname">__pos__</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; lupyne.engine.queries.Query<a class="reference internal" href="_modules/lupyne/engine/queries.html#Query.__pos__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.queries.Query.__pos__" title="Permalink to this definition">¶</a></dt>
+<dd><p>+self</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.queries.Query.__sub__">
+<code class="sig-name descname">__sub__</code><span class="sig-paren">(</span><em class="sig-param">other: org.apache.lucene.search.Query</em><span class="sig-paren">)</span> &#x2192; lupyne.engine.queries.Query<a class="reference internal" href="_modules/lupyne/engine/queries.html#Query.__sub__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.queries.Query.__sub__" title="Permalink to this definition">¶</a></dt>
+<dd><p>self -other</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.queries.Query.all">
+<em class="property">classmethod </em><code class="sig-name descname">all</code><span class="sig-paren">(</span><em class="sig-param">*queries: org.apache.lucene.search.Query</em>, <em class="sig-param">**terms</em><span class="sig-paren">)</span> &#x2192; lupyne.engine.queries.Query<a class="reference internal" href="_modules/lupyne/engine/queries.html#Query.all"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.queries.Query.all" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return lucene BooleanQuery with MUST clauses from queries and terms.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.queries.Query.alldocs">
+<em class="property">classmethod </em><code class="sig-name descname">alldocs</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; lupyne.engine.queries.Query<a class="reference internal" href="_modules/lupyne/engine/queries.html#Query.alldocs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.queries.Query.alldocs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return lucene MatchAllDocsQuery.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.queries.Query.any">
+<em class="property">classmethod </em><code class="sig-name descname">any</code><span class="sig-paren">(</span><em class="sig-param">*queries: org.apache.lucene.search.Query</em>, <em class="sig-param">**terms</em><span class="sig-paren">)</span> &#x2192; lupyne.engine.queries.Query<a class="reference internal" href="_modules/lupyne/engine/queries.html#Query.any"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.queries.Query.any" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return lucene BooleanQuery with SHOULD clauses from queries and terms.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.queries.Query.boost">
+<code class="sig-name descname">boost</code><span class="sig-paren">(</span><em class="sig-param">value: float</em><span class="sig-paren">)</span> &#x2192; lupyne.engine.queries.Query<a class="reference internal" href="_modules/lupyne/engine/queries.html#Query.boost"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.queries.Query.boost" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return lucene BoostQuery.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.queries.Query.constant">
+<code class="sig-name descname">constant</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; lupyne.engine.queries.Query<a class="reference internal" href="_modules/lupyne/engine/queries.html#Query.constant"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.queries.Query.constant" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return lucene ConstantScoreQuery.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.queries.Query.disjunct">
+<em class="property">classmethod </em><code class="sig-name descname">disjunct</code><span class="sig-paren">(</span><em class="sig-param">multiplier</em>, <em class="sig-param">*queries</em>, <em class="sig-param">**terms</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lupyne/engine/queries.html#Query.disjunct"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.queries.Query.disjunct" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return lucene DisjunctionMaxQuery from queries and terms.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.queries.Query.filter">
+<em class="property">classmethod </em><code class="sig-name descname">filter</code><span class="sig-paren">(</span><em class="sig-param">*queries: org.apache.lucene.search.Query</em>, <em class="sig-param">**terms</em><span class="sig-paren">)</span> &#x2192; lupyne.engine.queries.Query<a class="reference internal" href="_modules/lupyne/engine/queries.html#Query.filter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.queries.Query.filter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return lucene BooleanQuery with FILTER clauses from queries and terms.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.queries.Query.fuzzy">
+<em class="property">classmethod </em><code class="sig-name descname">fuzzy</code><span class="sig-paren">(</span><em class="sig-param">name: str</em>, <em class="sig-param">value</em>, <em class="sig-param">*args</em><span class="sig-paren">)</span> &#x2192; lupyne.engine.queries.Query<a class="reference internal" href="_modules/lupyne/engine/queries.html#Query.fuzzy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.queries.Query.fuzzy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return lucene FuzzyQuery.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.queries.Query.near">
+<em class="property">classmethod </em><code class="sig-name descname">near</code><span class="sig-paren">(</span><em class="sig-param">name: str</em>, <em class="sig-param">*values</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span> &#x2192; lupyne.engine.queries.SpanQuery<a class="reference internal" href="_modules/lupyne/engine/queries.html#Query.near"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.queries.Query.near" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return <a class="reference internal" href="#lupyne.engine.queries.SpanQuery.near" title="lupyne.engine.queries.SpanQuery.near"><code class="xref py py-meth docutils literal notranslate"><span class="pre">SpanNearQuery</span></code></a> from terms.
+Term values which supply another field name will be masked.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.queries.Query.nodocs">
+<em class="property">classmethod </em><code class="sig-name descname">nodocs</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; lupyne.engine.queries.Query<a class="reference internal" href="_modules/lupyne/engine/queries.html#Query.nodocs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.queries.Query.nodocs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return lucene MatchNoDocsQuery.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.queries.Query.phrase">
+<em class="property">classmethod </em><code class="sig-name descname">phrase</code><span class="sig-paren">(</span><em class="sig-param">name: str</em>, <em class="sig-param">*values</em>, <em class="sig-param">**attrs</em><span class="sig-paren">)</span> &#x2192; lupyne.engine.queries.Query<a class="reference internal" href="_modules/lupyne/engine/queries.html#Query.phrase"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.queries.Query.phrase" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return lucene MultiPhraseQuery.  None may be used as a placeholder.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.queries.Query.points">
+<em class="property">static </em><code class="sig-name descname">points</code><span class="sig-paren">(</span><em class="sig-param">name: str</em>, <em class="sig-param">*values</em><span class="sig-paren">)</span> &#x2192; org.apache.lucene.search.Query<a class="reference internal" href="_modules/lupyne/engine/queries.html#Query.points"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.queries.Query.points" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return lucene set query of one dimensional points.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.queries.Query.prefix">
+<em class="property">classmethod </em><code class="sig-name descname">prefix</code><span class="sig-paren">(</span><em class="sig-param">name: str</em>, <em class="sig-param">value</em><span class="sig-paren">)</span> &#x2192; lupyne.engine.queries.Query<a class="reference internal" href="_modules/lupyne/engine/queries.html#Query.prefix"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.queries.Query.prefix" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return lucene PrefixQuery.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.queries.Query.range">
+<em class="property">classmethod </em><code class="sig-name descname">range</code><span class="sig-paren">(</span><em class="sig-param">name: str</em>, <em class="sig-param">start</em>, <em class="sig-param">stop</em>, <em class="sig-param">lower=True</em>, <em class="sig-param">upper=False</em><span class="sig-paren">)</span> &#x2192; lupyne.engine.queries.Query<a class="reference internal" href="_modules/lupyne/engine/queries.html#Query.range"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.queries.Query.range" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return lucene RangeQuery, by default with a half-open interval.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.queries.Query.ranges">
+<em class="property">static </em><code class="sig-name descname">ranges</code><span class="sig-paren">(</span><em class="sig-param">name: str</em>, <em class="sig-param">*intervals</em>, <em class="sig-param">**inclusive</em><span class="sig-paren">)</span> &#x2192; org.apache.lucene.search.Query<a class="reference internal" href="_modules/lupyne/engine/queries.html#Query.ranges"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.queries.Query.ranges" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return lucene multidimensional point range query, by default with half-open intervals.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.queries.Query.regexp">
+<em class="property">classmethod </em><code class="sig-name descname">regexp</code><span class="sig-paren">(</span><em class="sig-param">name: str</em>, <em class="sig-param">value</em>, <em class="sig-param">*args</em><span class="sig-paren">)</span> &#x2192; lupyne.engine.queries.Query<a class="reference internal" href="_modules/lupyne/engine/queries.html#Query.regexp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.queries.Query.regexp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return lucene RegexpQuery.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.queries.Query.span">
+<em class="property">classmethod </em><code class="sig-name descname">span</code><span class="sig-paren">(</span><em class="sig-param">*term</em><span class="sig-paren">)</span> &#x2192; lupyne.engine.queries.SpanQuery<a class="reference internal" href="_modules/lupyne/engine/queries.html#Query.span"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.queries.Query.span" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return <a class="reference internal" href="#spanquery">SpanQuery</a> from term name and value or a MultiTermQuery.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.queries.Query.term">
+<em class="property">classmethod </em><code class="sig-name descname">term</code><span class="sig-paren">(</span><em class="sig-param">name: str</em>, <em class="sig-param">value</em><span class="sig-paren">)</span> &#x2192; lupyne.engine.queries.Query<a class="reference internal" href="_modules/lupyne/engine/queries.html#Query.term"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.queries.Query.term" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return lucene TermQuery.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.queries.Query.terms">
+<em class="property">classmethod </em><code class="sig-name descname">terms</code><span class="sig-paren">(</span><em class="sig-param">name: str</em>, <em class="sig-param">values</em><span class="sig-paren">)</span> &#x2192; lupyne.engine.queries.Query<a class="reference internal" href="_modules/lupyne/engine/queries.html#Query.terms"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.queries.Query.terms" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return lucene TermInSetQuery, optimizing a SHOULD BooleanQuery of many terms.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.queries.Query.wildcard">
+<em class="property">classmethod </em><code class="sig-name descname">wildcard</code><span class="sig-paren">(</span><em class="sig-param">name: str</em>, <em class="sig-param">value</em><span class="sig-paren">)</span> &#x2192; lupyne.engine.queries.Query<a class="reference internal" href="_modules/lupyne/engine/queries.html#Query.wildcard"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.queries.Query.wildcard" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return lucene WildcardQuery.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="spanquery">
+<h3>SpanQuery<a class="headerlink" href="#spanquery" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="lupyne.engine.queries.SpanQuery">
+<em class="property">class </em><code class="sig-prename descclassname">lupyne.engine.queries.</code><code class="sig-name descname">SpanQuery</code><span class="sig-paren">(</span><em class="sig-param">base: org.apache.lucene.search.Query</em>, <em class="sig-param">*args</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lupyne/engine/queries.html#SpanQuery"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.queries.SpanQuery" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#lupyne.engine.queries.Query" title="lupyne.engine.queries.Query"><code class="xref py py-class docutils literal notranslate"><span class="pre">lupyne.engine.queries.Query</span></code></a></p>
+<p>Inherited lucene SpanQuery with additional span constructors.</p>
+<dl class="method">
+<dt id="lupyne.engine.queries.SpanQuery.__getitem__">
+<code class="sig-name descname">__getitem__</code><span class="sig-paren">(</span><em class="sig-param">slc: slice</em><span class="sig-paren">)</span> &#x2192; lupyne.engine.queries.SpanQuery<a class="reference internal" href="_modules/lupyne/engine/queries.html#SpanQuery.__getitem__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.queries.SpanQuery.__getitem__" title="Permalink to this definition">¶</a></dt>
+<dd><p>&lt;SpanFirstQuery: spanFirst(self, other.stop)&gt;</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.queries.SpanQuery.__sub__">
+<code class="sig-name descname">__sub__</code><span class="sig-paren">(</span><em class="sig-param">other: org.apache.lucene.search.spans.SpanQuery</em><span class="sig-paren">)</span> &#x2192; lupyne.engine.queries.SpanQuery<a class="reference internal" href="_modules/lupyne/engine/queries.html#SpanQuery.__sub__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.queries.SpanQuery.__sub__" title="Permalink to this definition">¶</a></dt>
+<dd><p>self -other</p>
+<p>&lt;SpanNotQuery: spanNot(self, other)&gt;</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.queries.SpanQuery.__or__">
+<code class="sig-name descname">__or__</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; lupyne.engine.queries.SpanQuery<a class="reference internal" href="_modules/lupyne/engine/queries.html#SpanQuery.__or__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.queries.SpanQuery.__or__" title="Permalink to this definition">¶</a></dt>
+<dd><p>self other</p>
+<p>&lt;SpanOrQuery: spanOr(spans)&gt;</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.queries.SpanQuery.boost">
+<code class="sig-name descname">boost</code><span class="sig-paren">(</span><em class="sig-param">value: float</em><span class="sig-paren">)</span> &#x2192; lupyne.engine.queries.SpanQuery<a class="reference internal" href="_modules/lupyne/engine/queries.html#SpanQuery.boost"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.queries.SpanQuery.boost" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return lucene SpanBoostQuery.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.queries.SpanQuery.containing">
+<code class="sig-name descname">containing</code><span class="sig-paren">(</span><em class="sig-param">other: org.apache.lucene.search.spans.SpanQuery</em><span class="sig-paren">)</span> &#x2192; lupyne.engine.queries.SpanQuery<a class="reference internal" href="_modules/lupyne/engine/queries.html#SpanQuery.containing"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.queries.SpanQuery.containing" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return lucene SpanContainingQuery.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.queries.SpanQuery.mask">
+<code class="sig-name descname">mask</code><span class="sig-paren">(</span><em class="sig-param">name: str</em><span class="sig-paren">)</span> &#x2192; lupyne.engine.queries.SpanQuery<a class="reference internal" href="_modules/lupyne/engine/queries.html#SpanQuery.mask"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.queries.SpanQuery.mask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return lucene FieldMaskingSpanQuery, which allows combining span queries from different fields.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.queries.SpanQuery.near">
+<code class="sig-name descname">near</code><span class="sig-paren">(</span><em class="sig-param">*</em>, <em class="sig-param">slop=0</em>, <em class="sig-param">inOrder=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lupyne/engine/queries.html#SpanQuery.near"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.queries.SpanQuery.near" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return lucene SpanNearQuery from SpanQueries.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.queries.SpanQuery.within">
+<code class="sig-name descname">within</code><span class="sig-paren">(</span><em class="sig-param">other: org.apache.lucene.search.spans.SpanQuery</em><span class="sig-paren">)</span> &#x2192; lupyne.engine.queries.SpanQuery<a class="reference internal" href="_modules/lupyne/engine/queries.html#SpanQuery.within"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.queries.SpanQuery.within" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return lucene SpanWithinQuery.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="spellparser">
+<h3>SpellParser<a class="headerlink" href="#spellparser" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="lupyne.engine.queries.SpellParser">
+<em class="property">class </em><code class="sig-prename descclassname">lupyne.engine.queries.</code><code class="sig-name descname">SpellParser</code><a class="reference internal" href="_modules/lupyne/engine/queries.html#SpellParser"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.queries.SpellParser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Inherited lucene QueryParser which corrects spelling.</p>
+<p>Assign a searcher attribute or override <code class="xref py py-meth docutils literal notranslate"><span class="pre">correct()</span></code> implementation.</p>
+<dl class="attribute">
+<dt id="lupyne.engine.queries.SpellParser.searcher">
+<code class="sig-name descname">searcher</code><a class="headerlink" href="#lupyne.engine.queries.SpellParser.searcher" title="Permalink to this definition">¶</a></dt>
+<dd><p><a class="reference internal" href="#indexsearcher">IndexSearcher</a></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.queries.SpellParser.rewrite">
+<code class="sig-name descname">rewrite</code><span class="sig-paren">(</span><em class="sig-param">query: org.apache.lucene.search.Query</em><span class="sig-paren">)</span> &#x2192; org.apache.lucene.search.Query<a class="reference internal" href="_modules/lupyne/engine/queries.html#SpellParser.rewrite"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.queries.SpellParser.rewrite" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return term or phrase query with corrected terms substituted.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lupyne.engine.queries.SpellParser.suggest">
+<code class="sig-name descname">suggest</code><span class="sig-paren">(</span><em class="sig-param">term: org.apache.lucene.index.Term</em><span class="sig-paren">)</span> &#x2192; org.apache.lucene.index.Term<a class="reference internal" href="_modules/lupyne/engine/queries.html#SpellParser.suggest"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lupyne.engine.queries.SpellParser.suggest" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return term with text replaced as necessary.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="server.html" class="btn btn-neutral float-right" title="server" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="index.html" class="btn btn-neutral float-left" title="Lupyne’s documentation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, Aric Coady
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

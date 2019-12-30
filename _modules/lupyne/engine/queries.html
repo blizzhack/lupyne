@@ -1,0 +1,503 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>lupyne.engine.queries &mdash; lupyne 2.4 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../../_static/language_data.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> lupyne
+          
+
+          
+            
+            <img src="../../../_static/logo.png" class="logo" alt="Logo"/>
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                2.4
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../engine.html">engine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../server.html">server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples.html">examples</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">lupyne</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>lupyne.engine.queries</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for lupyne.engine.queries</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Iterator</span>
+<span class="kn">import</span> <span class="nn">lucene</span>  <span class="c1"># noqa</span>
+<span class="kn">from</span> <span class="nn">java.lang</span> <span class="kn">import</span> <span class="n">Double</span><span class="p">,</span> <span class="n">Integer</span><span class="p">,</span> <span class="n">Long</span>
+<span class="kn">from</span> <span class="nn">java.util</span> <span class="kn">import</span> <span class="n">Arrays</span>
+<span class="kn">from</span> <span class="nn">org.apache.lucene</span> <span class="kn">import</span> <span class="n">document</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">search</span><span class="p">,</span> <span class="n">util</span>
+<span class="kn">from</span> <span class="nn">org.apache.lucene.search</span> <span class="kn">import</span> <span class="n">spans</span>
+<span class="kn">from</span> <span class="nn">org.apache.pylucene.queryparser.classic</span> <span class="kn">import</span> <span class="n">PythonQueryParser</span>
+
+
+<div class="viewcode-block" id="Query"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.queries.Query">[docs]</a><span class="k">class</span> <span class="nc">Query</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Inherited lucene Query, with dynamic base class acquisition.</span>
+
+<span class="sd">    Uses class methods and operator overloading for convenient query construction.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Query.__new__"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.queries.Query.__new__">[docs]</a>    <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">base</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">base</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">base</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">base</span><span class="p">),</span> <span class="p">{}))</span></div>
+
+<div class="viewcode-block" id="Query.__init__"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.queries.Query.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">base</span><span class="p">:</span> <span class="n">search</span><span class="o">.</span><span class="n">Query</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="n">base</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Query.term"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.queries.Query.term">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">term</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Query&#39;</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return lucene TermQuery.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">search</span><span class="o">.</span><span class="n">TermQuery</span><span class="p">,</span> <span class="n">index</span><span class="o">.</span><span class="n">Term</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="Query.terms"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.queries.Query.terms">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">terms</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">values</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Query&#39;</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return lucene TermInSetQuery, optimizing a SHOULD BooleanQuery of many terms.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">search</span><span class="o">.</span><span class="n">TermInSetQuery</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">util</span><span class="o">.</span><span class="n">BytesRef</span><span class="p">,</span> <span class="n">values</span><span class="p">)))</span></div>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">boolean</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">occur</span><span class="p">,</span> <span class="o">*</span><span class="n">queries</span><span class="p">,</span> <span class="o">**</span><span class="n">terms</span><span class="p">):</span>
+        <span class="n">builder</span> <span class="o">=</span> <span class="n">search</span><span class="o">.</span><span class="n">BooleanQuery</span><span class="o">.</span><span class="n">Builder</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">query</span> <span class="ow">in</span> <span class="n">queries</span><span class="p">:</span>
+            <span class="n">builder</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">occur</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">terms</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="p">[</span><span class="n">values</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="n">values</span><span class="p">:</span>
+                <span class="n">builder</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">term</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">),</span> <span class="n">occur</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">builder</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
+
+<div class="viewcode-block" id="Query.any"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.queries.Query.any">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">any</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">queries</span><span class="p">:</span> <span class="n">search</span><span class="o">.</span><span class="n">Query</span><span class="p">,</span> <span class="o">**</span><span class="n">terms</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Query&#39;</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return lucene BooleanQuery with SHOULD clauses from queries and terms.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">boolean</span><span class="p">(</span><span class="n">search</span><span class="o">.</span><span class="n">BooleanClause</span><span class="o">.</span><span class="n">Occur</span><span class="o">.</span><span class="n">SHOULD</span><span class="p">,</span> <span class="o">*</span><span class="n">queries</span><span class="p">,</span> <span class="o">**</span><span class="n">terms</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Query.all"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.queries.Query.all">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">all</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">queries</span><span class="p">:</span> <span class="n">search</span><span class="o">.</span><span class="n">Query</span><span class="p">,</span> <span class="o">**</span><span class="n">terms</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Query&#39;</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return lucene BooleanQuery with MUST clauses from queries and terms.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">boolean</span><span class="p">(</span><span class="n">search</span><span class="o">.</span><span class="n">BooleanClause</span><span class="o">.</span><span class="n">Occur</span><span class="o">.</span><span class="n">MUST</span><span class="p">,</span> <span class="o">*</span><span class="n">queries</span><span class="p">,</span> <span class="o">**</span><span class="n">terms</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Query.filter"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.queries.Query.filter">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">filter</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">queries</span><span class="p">:</span> <span class="n">search</span><span class="o">.</span><span class="n">Query</span><span class="p">,</span> <span class="o">**</span><span class="n">terms</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Query&#39;</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return lucene BooleanQuery with FILTER clauses from queries and terms.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">boolean</span><span class="p">(</span><span class="n">search</span><span class="o">.</span><span class="n">BooleanClause</span><span class="o">.</span><span class="n">Occur</span><span class="o">.</span><span class="n">FILTER</span><span class="p">,</span> <span class="o">*</span><span class="n">queries</span><span class="p">,</span> <span class="o">**</span><span class="n">terms</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Query.disjunct"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.queries.Query.disjunct">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">disjunct</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">multiplier</span><span class="p">,</span> <span class="o">*</span><span class="n">queries</span><span class="p">,</span> <span class="o">**</span><span class="n">terms</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return lucene DisjunctionMaxQuery from queries and terms.&quot;&quot;&quot;</span>
+        <span class="n">queries</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">queries</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">terms</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">queries</span> <span class="o">+=</span> <span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">term</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="p">([</span><span class="n">values</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="n">values</span><span class="p">))</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">search</span><span class="o">.</span><span class="n">DisjunctionMaxQuery</span><span class="p">,</span> <span class="n">Arrays</span><span class="o">.</span><span class="n">asList</span><span class="p">(</span><span class="n">queries</span><span class="p">),</span> <span class="n">multiplier</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Query.span"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.queries.Query.span">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">span</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">term</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;SpanQuery&#39;</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return `SpanQuery`_ from term name and value or a MultiTermQuery.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">term</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">SpanQuery</span><span class="p">(</span><span class="n">spans</span><span class="o">.</span><span class="n">SpanMultiTermQueryWrapper</span><span class="p">,</span> <span class="o">*</span><span class="n">term</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">SpanQuery</span><span class="p">(</span><span class="n">spans</span><span class="o">.</span><span class="n">SpanTermQuery</span><span class="p">,</span> <span class="n">index</span><span class="o">.</span><span class="n">Term</span><span class="p">(</span><span class="o">*</span><span class="n">term</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="Query.near"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.queries.Query.near">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">near</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="n">values</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;SpanQuery&#39;</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return :meth:`SpanNearQuery &lt;SpanQuery.near&gt;` from terms.</span>
+<span class="sd">        Term values which supply another field name will be masked.&quot;&quot;&quot;</span>
+        <span class="n">spans</span> <span class="o">=</span> <span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">span</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="bp">cls</span><span class="o">.</span><span class="n">span</span><span class="p">(</span><span class="o">*</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">mask</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">values</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">SpanQuery</span><span class="o">.</span><span class="n">near</span><span class="p">(</span><span class="o">*</span><span class="n">spans</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Query.prefix"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.queries.Query.prefix">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">prefix</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Query&#39;</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return lucene PrefixQuery.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">search</span><span class="o">.</span><span class="n">PrefixQuery</span><span class="p">,</span> <span class="n">index</span><span class="o">.</span><span class="n">Term</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="Query.range"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.queries.Query.range">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">range</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Query&#39;</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return lucene RangeQuery, by default with a half-open interval.&quot;&quot;&quot;</span>
+        <span class="n">start</span><span class="p">,</span> <span class="n">stop</span> <span class="o">=</span> <span class="p">(</span><span class="n">value</span> <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">util</span><span class="o">.</span><span class="n">BytesRef</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">))</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">search</span><span class="o">.</span><span class="n">TermRangeQuery</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">,</span> <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Query.phrase"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.queries.Query.phrase">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">phrase</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="n">values</span><span class="p">,</span> <span class="o">**</span><span class="n">attrs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Query&#39;</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return lucene MultiPhraseQuery.  None may be used as a placeholder.&quot;&quot;&quot;</span>
+        <span class="n">builder</span> <span class="o">=</span> <span class="n">search</span><span class="o">.</span><span class="n">MultiPhraseQuery</span><span class="o">.</span><span class="n">Builder</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="n">attrs</span><span class="p">:</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="n">builder</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">attrs</span><span class="p">[</span><span class="n">attr</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">words</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">values</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">words</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="n">words</span> <span class="o">=</span> <span class="p">[</span><span class="n">words</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">words</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">builder</span><span class="o">.</span><span class="n">add</span><span class="p">([</span><span class="n">index</span><span class="o">.</span><span class="n">Term</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">word</span><span class="p">)</span> <span class="k">for</span> <span class="n">word</span> <span class="ow">in</span> <span class="n">words</span><span class="p">],</span> <span class="n">idx</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">builder</span><span class="o">.</span><span class="n">build</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Query.wildcard"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.queries.Query.wildcard">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">wildcard</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Query&#39;</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return lucene WildcardQuery.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">search</span><span class="o">.</span><span class="n">WildcardQuery</span><span class="p">,</span> <span class="n">index</span><span class="o">.</span><span class="n">Term</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="Query.fuzzy"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.queries.Query.fuzzy">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">fuzzy</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Query&#39;</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return lucene FuzzyQuery.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">search</span><span class="o">.</span><span class="n">FuzzyQuery</span><span class="p">,</span> <span class="n">index</span><span class="o">.</span><span class="n">Term</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">),</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Query.alldocs"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.queries.Query.alldocs">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">alldocs</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Query&#39;</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return lucene MatchAllDocsQuery.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">search</span><span class="o">.</span><span class="n">MatchAllDocsQuery</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Query.nodocs"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.queries.Query.nodocs">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">nodocs</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Query&#39;</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return lucene MatchNoDocsQuery.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">search</span><span class="o">.</span><span class="n">MatchNoDocsQuery</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Query.regexp"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.queries.Query.regexp">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">regexp</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Query&#39;</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return lucene RegexpQuery.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">search</span><span class="o">.</span><span class="n">RegexpQuery</span><span class="p">,</span> <span class="n">index</span><span class="o">.</span><span class="n">Term</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">),</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Query.points"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.queries.Query.points">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">points</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="n">values</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">search</span><span class="o">.</span><span class="n">Query</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return lucene set query of one dimensional points.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">values</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">document</span><span class="o">.</span><span class="n">DoublePoint</span><span class="o">.</span><span class="n">newSetQuery</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">values</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">document</span><span class="o">.</span><span class="n">LongPoint</span><span class="o">.</span><span class="n">newSetQuery</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="n">values</span><span class="p">)))</span></div>
+
+<div class="viewcode-block" id="Query.ranges"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.queries.Query.ranges">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">ranges</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="n">intervals</span><span class="p">,</span> <span class="o">**</span><span class="n">inclusive</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">search</span><span class="o">.</span><span class="n">Query</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return lucene multidimensional point range query, by default with half-open intervals.&quot;&quot;&quot;</span>
+        <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span> <span class="o">=</span> <span class="n">inclusive</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;lower&#39;</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span> <span class="n">inclusive</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;upper&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="n">starts</span><span class="p">,</span> <span class="n">stops</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">start</span><span class="p">,</span> <span class="n">stop</span> <span class="ow">in</span> <span class="n">intervals</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">stop</span><span class="p">,</span> <span class="nb">float</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">start</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">start</span> <span class="o">=</span> <span class="n">Double</span><span class="o">.</span><span class="n">NEGATIVE_INFINITY</span>
+                <span class="k">elif</span> <span class="ow">not</span> <span class="n">lower</span><span class="p">:</span>
+                    <span class="n">start</span> <span class="o">=</span> <span class="n">document</span><span class="o">.</span><span class="n">DoublePoint</span><span class="o">.</span><span class="n">nextUp</span><span class="p">(</span><span class="n">start</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">stop</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">stop</span> <span class="o">=</span> <span class="n">Double</span><span class="o">.</span><span class="n">POSITIVE_INFINITY</span>
+                <span class="k">elif</span> <span class="ow">not</span> <span class="n">upper</span><span class="p">:</span>
+                    <span class="n">stop</span> <span class="o">=</span> <span class="n">document</span><span class="o">.</span><span class="n">DoublePoint</span><span class="o">.</span><span class="n">nextDown</span><span class="p">(</span><span class="n">stop</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">start</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">start</span> <span class="o">=</span> <span class="n">Long</span><span class="o">.</span><span class="n">MIN_VALUE</span>
+                <span class="k">elif</span> <span class="ow">not</span> <span class="n">lower</span><span class="p">:</span>
+                    <span class="n">start</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">if</span> <span class="n">stop</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">stop</span> <span class="o">=</span> <span class="n">Long</span><span class="o">.</span><span class="n">MAX_VALUE</span>
+                <span class="k">elif</span> <span class="ow">not</span> <span class="n">upper</span><span class="p">:</span>
+                    <span class="n">stop</span> <span class="o">-=</span> <span class="mi">1</span>
+                <span class="n">start</span><span class="p">,</span> <span class="n">stop</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">start</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">stop</span><span class="p">)</span>
+            <span class="n">starts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">start</span><span class="p">)</span>
+            <span class="n">stops</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">stop</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">starts</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">document</span><span class="o">.</span><span class="n">DoublePoint</span><span class="o">.</span><span class="n">newRangeQuery</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">starts</span><span class="p">,</span> <span class="n">stops</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">document</span><span class="o">.</span><span class="n">LongPoint</span><span class="o">.</span><span class="n">newRangeQuery</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">starts</span><span class="p">,</span> <span class="n">stops</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Query.constant"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.queries.Query.constant">[docs]</a>    <span class="k">def</span> <span class="nf">constant</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Query&#39;</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return lucene ConstantScoreQuery.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">Query</span><span class="p">(</span><span class="n">search</span><span class="o">.</span><span class="n">ConstantScoreQuery</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Query.boost"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.queries.Query.boost">[docs]</a>    <span class="k">def</span> <span class="nf">boost</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Query&#39;</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return lucene BoostQuery.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">Query</span><span class="p">(</span><span class="n">search</span><span class="o">.</span><span class="n">BoostQuery</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Query.__pos__"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.queries.Query.__pos__">[docs]</a>    <span class="k">def</span> <span class="fm">__pos__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Query&#39;</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;+self&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">Query</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Query.__neg__"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.queries.Query.__neg__">[docs]</a>    <span class="k">def</span> <span class="fm">__neg__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Query&#39;</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;-self&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">Query</span><span class="o">.</span><span class="n">boolean</span><span class="p">(</span><span class="n">search</span><span class="o">.</span><span class="n">BooleanClause</span><span class="o">.</span><span class="n">Occur</span><span class="o">.</span><span class="n">MUST_NOT</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Query.__and__"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.queries.Query.__and__">[docs]</a>    <span class="k">def</span> <span class="fm">__and__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">search</span><span class="o">.</span><span class="n">Query</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Query&#39;</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;+self +other&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">Query</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="fm">__rand__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">Query</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Query.__or__"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.queries.Query.__or__">[docs]</a>    <span class="k">def</span> <span class="fm">__or__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">search</span><span class="o">.</span><span class="n">Query</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Query&#39;</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;self other&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">Query</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="fm">__ror__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">Query</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Query.__sub__"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.queries.Query.__sub__">[docs]</a>    <span class="k">def</span> <span class="fm">__sub__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">search</span><span class="o">.</span><span class="n">Query</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Query&#39;</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;self -other&quot;&quot;&quot;</span>
+        <span class="n">builder</span> <span class="o">=</span> <span class="n">search</span><span class="o">.</span><span class="n">BooleanQuery</span><span class="o">.</span><span class="n">Builder</span><span class="p">()</span>
+        <span class="n">builder</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">search</span><span class="o">.</span><span class="n">BooleanClause</span><span class="o">.</span><span class="n">Occur</span><span class="o">.</span><span class="n">SHOULD</span><span class="p">)</span>
+        <span class="n">builder</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">search</span><span class="o">.</span><span class="n">BooleanClause</span><span class="o">.</span><span class="n">Occur</span><span class="o">.</span><span class="n">MUST_NOT</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">builder</span><span class="o">.</span><span class="n">build</span><span class="p">()</span></div>
+
+    <span class="k">def</span> <span class="fm">__rsub__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">Query</span><span class="o">.</span><span class="fm">__sub__</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SpanQuery"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.queries.SpanQuery">[docs]</a><span class="k">class</span> <span class="nc">SpanQuery</span><span class="p">(</span><span class="n">Query</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Inherited lucene SpanQuery with additional span constructors.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="SpanQuery.__getitem__"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.queries.SpanQuery.__getitem__">[docs]</a>    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">slc</span><span class="p">:</span> <span class="nb">slice</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;SpanQuery&#39;</span><span class="p">:</span>
+        <span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">,</span> <span class="n">step</span> <span class="o">=</span> <span class="n">slc</span><span class="o">.</span><span class="n">indices</span><span class="p">(</span><span class="n">Integer</span><span class="o">.</span><span class="n">MAX_VALUE</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">step</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;slice step is not supported&#39;</span>
+        <span class="k">return</span> <span class="n">SpanQuery</span><span class="p">(</span><span class="n">spans</span><span class="o">.</span><span class="n">SpanPositionRangeQuery</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SpanQuery.__sub__"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.queries.SpanQuery.__sub__">[docs]</a>    <span class="k">def</span> <span class="fm">__sub__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">spans</span><span class="o">.</span><span class="n">SpanQuery</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;SpanQuery&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">SpanQuery</span><span class="p">(</span><span class="n">spans</span><span class="o">.</span><span class="n">SpanNotQuery</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SpanQuery.__or__"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.queries.SpanQuery.__or__">[docs]</a>    <span class="k">def</span> <span class="fm">__or__</span><span class="p">(</span><span class="o">*</span><span class="n">spans_</span><span class="p">:</span> <span class="n">spans</span><span class="o">.</span><span class="n">SpanQuery</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;SpanQuery&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">SpanQuery</span><span class="p">(</span><span class="n">spans</span><span class="o">.</span><span class="n">SpanOrQuery</span><span class="p">,</span> <span class="n">spans_</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SpanQuery.near"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.queries.SpanQuery.near">[docs]</a>    <span class="k">def</span> <span class="nf">near</span><span class="p">(</span><span class="o">*</span><span class="n">spans_</span><span class="p">,</span> <span class="n">slop</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">inOrder</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return lucene SpanNearQuery from SpanQueries.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">SpanQuery</span><span class="p">(</span><span class="n">spans</span><span class="o">.</span><span class="n">SpanNearQuery</span><span class="p">,</span> <span class="n">spans_</span><span class="p">,</span> <span class="n">slop</span><span class="p">,</span> <span class="n">inOrder</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SpanQuery.mask"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.queries.SpanQuery.mask">[docs]</a>    <span class="k">def</span> <span class="nf">mask</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;SpanQuery&#39;</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return lucene FieldMaskingSpanQuery, which allows combining span queries from different fields.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">SpanQuery</span><span class="p">(</span><span class="n">spans</span><span class="o">.</span><span class="n">FieldMaskingSpanQuery</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SpanQuery.boost"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.queries.SpanQuery.boost">[docs]</a>    <span class="k">def</span> <span class="nf">boost</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;SpanQuery&#39;</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return lucene SpanBoostQuery.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">SpanQuery</span><span class="p">(</span><span class="n">spans</span><span class="o">.</span><span class="n">SpanBoostQuery</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SpanQuery.containing"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.queries.SpanQuery.containing">[docs]</a>    <span class="k">def</span> <span class="nf">containing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">spans</span><span class="o">.</span><span class="n">SpanQuery</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;SpanQuery&#39;</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return lucene SpanContainingQuery.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">SpanQuery</span><span class="p">(</span><span class="n">spans</span><span class="o">.</span><span class="n">SpanContainingQuery</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SpanQuery.within"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.queries.SpanQuery.within">[docs]</a>    <span class="k">def</span> <span class="nf">within</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">spans</span><span class="o">.</span><span class="n">SpanQuery</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;SpanQuery&#39;</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return lucene SpanWithinQuery.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">SpanQuery</span><span class="p">(</span><span class="n">spans</span><span class="o">.</span><span class="n">SpanWithinQuery</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">)</span></div></div>
+
+
+<span class="k">class</span> <span class="nc">DocValues</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;DocValues with type conversion.&quot;&quot;&quot;</span>
+
+    <span class="k">class</span> <span class="nc">Sorted</span><span class="p">:</span>
+        <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">docvalues</span><span class="p">:</span> <span class="n">index</span><span class="o">.</span><span class="n">DocValues</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">type</span><span class="p">:</span> <span class="n">Callable</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">docvalues</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="n">docvalues</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="nb">type</span>
+
+        <span class="k">def</span> <span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="k">return</span> <span class="nb">map</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="fm">__getitem__</span><span class="p">,</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">))</span>
+
+        <span class="k">def</span> <span class="nf">select</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ids</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+            <span class="sd">&quot;&quot;&quot;Return mapping of doc ids to values.&quot;&quot;&quot;</span>
+            <span class="k">return</span> <span class="p">{</span><span class="nb">id</span><span class="p">:</span> <span class="bp">self</span><span class="p">[</span><span class="nb">id</span><span class="p">]</span> <span class="k">for</span> <span class="nb">id</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">ids</span><span class="p">)}</span>
+
+        <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">docvalues</span><span class="o">.</span><span class="n">advanceExact</span><span class="p">(</span><span class="nb">id</span><span class="p">):</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">docvalues</span><span class="o">.</span><span class="n">binaryValue</span><span class="p">())</span>
+
+    <span class="n">Binary</span> <span class="o">=</span> <span class="n">Sorted</span>
+
+    <span class="k">class</span> <span class="nc">Numeric</span><span class="p">(</span><span class="n">Sorted</span><span class="p">):</span>
+        <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">docvalues</span><span class="o">.</span><span class="n">advanceExact</span><span class="p">(</span><span class="nb">id</span><span class="p">):</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">docvalues</span><span class="o">.</span><span class="n">longValue</span><span class="p">())</span>
+
+    <span class="k">class</span> <span class="nc">SortedNumeric</span><span class="p">(</span><span class="n">Sorted</span><span class="p">):</span>
+        <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">docvalues</span><span class="o">.</span><span class="n">advanceExact</span><span class="p">(</span><span class="nb">id</span><span class="p">):</span>
+                <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">docvalues</span><span class="o">.</span><span class="n">nextValue</span><span class="p">())</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">docvalues</span><span class="o">.</span><span class="n">docValueCount</span><span class="p">()))</span>
+
+    <span class="k">class</span> <span class="nc">SortedSet</span><span class="p">(</span><span class="n">Sorted</span><span class="p">):</span>
+        <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="n">ords</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">docvalues</span><span class="o">.</span><span class="n">nextOrd</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">docvalues</span><span class="o">.</span><span class="n">NO_MORE_ORDS</span><span class="p">)</span>  <span class="c1"># type: Iterator</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">docvalues</span><span class="o">.</span><span class="n">advanceExact</span><span class="p">(</span><span class="nb">id</span><span class="p">):</span>
+                <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">docvalues</span><span class="o">.</span><span class="n">lookupOrd</span><span class="p">(</span><span class="nb">ord</span><span class="p">))</span> <span class="k">for</span> <span class="nb">ord</span> <span class="ow">in</span> <span class="n">ords</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="SpellParser"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.queries.SpellParser">[docs]</a><span class="k">class</span> <span class="nc">SpellParser</span><span class="p">(</span><span class="n">PythonQueryParser</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Inherited lucene QueryParser which corrects spelling.</span>
+
+<span class="sd">    Assign a searcher attribute or override :meth:`correct` implementation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="SpellParser.suggest"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.queries.SpellParser.suggest">[docs]</a>    <span class="k">def</span> <span class="nf">suggest</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">term</span><span class="p">:</span> <span class="n">index</span><span class="o">.</span><span class="n">Term</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">index</span><span class="o">.</span><span class="n">Term</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return term with text replaced as necessary.&quot;&quot;&quot;</span>
+        <span class="n">field</span> <span class="o">=</span> <span class="n">term</span><span class="o">.</span><span class="n">field</span><span class="p">()</span>
+        <span class="n">words</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">searcher</span><span class="o">.</span><span class="n">suggest</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="n">term</span><span class="o">.</span><span class="n">text</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">index</span><span class="o">.</span><span class="n">Term</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="o">*</span><span class="n">words</span><span class="p">)</span> <span class="k">if</span> <span class="n">words</span> <span class="k">else</span> <span class="n">term</span></div>
+
+<div class="viewcode-block" id="SpellParser.rewrite"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.queries.SpellParser.rewrite">[docs]</a>    <span class="k">def</span> <span class="nf">rewrite</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="n">search</span><span class="o">.</span><span class="n">Query</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">search</span><span class="o">.</span><span class="n">Query</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return term or phrase query with corrected terms substituted.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">search</span><span class="o">.</span><span class="n">TermQuery</span><span class="o">.</span><span class="n">instance_</span><span class="p">(</span><span class="n">query</span><span class="p">):</span>
+            <span class="n">term</span> <span class="o">=</span> <span class="n">search</span><span class="o">.</span><span class="n">TermQuery</span><span class="o">.</span><span class="n">cast_</span><span class="p">(</span><span class="n">query</span><span class="p">)</span><span class="o">.</span><span class="n">term</span>
+            <span class="k">return</span> <span class="n">search</span><span class="o">.</span><span class="n">TermQuery</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">suggest</span><span class="p">(</span><span class="n">term</span><span class="p">))</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="n">search</span><span class="o">.</span><span class="n">PhraseQuery</span><span class="o">.</span><span class="n">cast_</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+        <span class="n">builder</span> <span class="o">=</span> <span class="n">search</span><span class="o">.</span><span class="n">PhraseQuery</span><span class="o">.</span><span class="n">Builder</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">position</span><span class="p">,</span> <span class="n">term</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">query</span><span class="o">.</span><span class="n">positions</span><span class="p">,</span> <span class="n">query</span><span class="o">.</span><span class="n">terms</span><span class="p">):</span>
+            <span class="n">builder</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">suggest</span><span class="p">(</span><span class="n">term</span><span class="p">),</span> <span class="n">position</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">builder</span><span class="o">.</span><span class="n">build</span><span class="p">()</span></div>
+
+    <span class="k">def</span> <span class="nf">getFieldQuery_quoted</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">rewrite</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">getFieldQuery_quoted_super</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">getFieldQuery_slop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">rewrite</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">getFieldQuery_slop_super</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">))</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, Aric Coady
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

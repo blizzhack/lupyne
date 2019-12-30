@@ -1,0 +1,638 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>lupyne.engine.documents &mdash; lupyne 2.4 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../../_static/language_data.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> lupyne
+          
+
+          
+            
+            <img src="../../../_static/logo.png" class="logo" alt="Logo"/>
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                2.4
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../engine.html">engine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../server.html">server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples.html">examples</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">lupyne</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>lupyne.engine.documents</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for lupyne.engine.documents</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">calendar</span>
+<span class="kn">import</span> <span class="nn">collections</span>
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">import</span> <span class="nn">operator</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">Sequence</span>
+<span class="kn">import</span> <span class="nn">lucene</span>  <span class="c1"># noqa</span>
+<span class="kn">from</span> <span class="nn">java.lang</span> <span class="kn">import</span> <span class="n">Long</span>
+<span class="kn">from</span> <span class="nn">java.util</span> <span class="kn">import</span> <span class="n">Arrays</span><span class="p">,</span> <span class="n">HashSet</span>
+<span class="kn">from</span> <span class="nn">org.apache.lucene</span> <span class="kn">import</span> <span class="n">document</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">search</span><span class="p">,</span> <span class="n">util</span>
+<span class="kn">from</span> <span class="nn">org.apache.lucene.search</span> <span class="kn">import</span> <span class="n">grouping</span>
+<span class="kn">from</span> <span class="nn">.queries</span> <span class="kn">import</span> <span class="n">Query</span>
+<span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">convert</span>
+
+<span class="n">FieldType</span> <span class="o">=</span> <span class="n">document</span><span class="o">.</span><span class="n">FieldType</span>
+
+
+<div class="viewcode-block" id="Field"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.documents.Field">[docs]</a><span class="k">class</span> <span class="nc">Field</span><span class="p">(</span><span class="n">FieldType</span><span class="p">):</span>  <span class="c1"># type: ignore</span>
+    <span class="sd">&quot;&quot;&quot;Saved parameters which can generate lucene Fields given values.</span>
+
+<span class="sd">    :param name: name of field</span>
+<span class="sd">    :param boost: boost factor</span>
+<span class="sd">    :param stored, indexed, settings: lucene FieldType attributes</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">docValuesType</span> <span class="o">=</span> <span class="nb">property</span><span class="p">(</span><span class="n">FieldType</span><span class="o">.</span><span class="n">docValuesType</span><span class="p">,</span> <span class="n">FieldType</span><span class="o">.</span><span class="n">setDocValuesType</span><span class="p">)</span>
+    <span class="n">indexOptions</span> <span class="o">=</span> <span class="nb">property</span><span class="p">(</span><span class="n">FieldType</span><span class="o">.</span><span class="n">indexOptions</span><span class="p">,</span> <span class="n">FieldType</span><span class="o">.</span><span class="n">setIndexOptions</span><span class="p">)</span>
+    <span class="n">omitNorms</span> <span class="o">=</span> <span class="nb">property</span><span class="p">(</span><span class="n">FieldType</span><span class="o">.</span><span class="n">omitNorms</span><span class="p">,</span> <span class="n">FieldType</span><span class="o">.</span><span class="n">setOmitNorms</span><span class="p">)</span>
+    <span class="n">stored</span> <span class="o">=</span> <span class="nb">property</span><span class="p">(</span><span class="n">FieldType</span><span class="o">.</span><span class="n">stored</span><span class="p">,</span> <span class="n">FieldType</span><span class="o">.</span><span class="n">setStored</span><span class="p">)</span>
+    <span class="n">storeTermVectorOffsets</span> <span class="o">=</span> <span class="nb">property</span><span class="p">(</span><span class="n">FieldType</span><span class="o">.</span><span class="n">storeTermVectorOffsets</span><span class="p">,</span> <span class="n">FieldType</span><span class="o">.</span><span class="n">setStoreTermVectorOffsets</span><span class="p">)</span>
+    <span class="n">storeTermVectorPayloads</span> <span class="o">=</span> <span class="nb">property</span><span class="p">(</span><span class="n">FieldType</span><span class="o">.</span><span class="n">storeTermVectorPayloads</span><span class="p">,</span> <span class="n">FieldType</span><span class="o">.</span><span class="n">setStoreTermVectorPayloads</span><span class="p">)</span>
+    <span class="n">storeTermVectorPositions</span> <span class="o">=</span> <span class="nb">property</span><span class="p">(</span><span class="n">FieldType</span><span class="o">.</span><span class="n">storeTermVectorPositions</span><span class="p">,</span> <span class="n">FieldType</span><span class="o">.</span><span class="n">setStoreTermVectorPositions</span><span class="p">)</span>
+    <span class="n">storeTermVectors</span> <span class="o">=</span> <span class="nb">property</span><span class="p">(</span><span class="n">FieldType</span><span class="o">.</span><span class="n">storeTermVectors</span><span class="p">,</span> <span class="n">FieldType</span><span class="o">.</span><span class="n">setStoreTermVectors</span><span class="p">)</span>
+    <span class="n">tokenized</span> <span class="o">=</span> <span class="nb">property</span><span class="p">(</span><span class="n">FieldType</span><span class="o">.</span><span class="n">tokenized</span><span class="p">,</span> <span class="n">FieldType</span><span class="o">.</span><span class="n">setTokenized</span><span class="p">)</span>
+
+    <span class="n">properties</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">locals</span><span class="p">()</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;__&#39;</span><span class="p">)}</span>
+    <span class="n">types</span> <span class="o">=</span> <span class="p">{</span><span class="nb">int</span><span class="p">:</span> <span class="s1">&#39;long&#39;</span><span class="p">,</span> <span class="nb">float</span><span class="p">:</span> <span class="s1">&#39;double&#39;</span><span class="p">}</span>
+    <span class="n">types</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">NUMERIC</span><span class="o">=</span><span class="s1">&#39;long&#39;</span><span class="p">,</span> <span class="n">BINARY</span><span class="o">=</span><span class="s1">&#39;string&#39;</span><span class="p">,</span> <span class="n">SORTED</span><span class="o">=</span><span class="s1">&#39;string&#39;</span><span class="p">,</span> <span class="n">SORTED_NUMERIC</span><span class="o">=</span><span class="s1">&#39;long&#39;</span><span class="p">,</span> <span class="n">SORTED_SET</span><span class="o">=</span><span class="s1">&#39;string&#39;</span><span class="p">)</span>
+    <span class="n">dimensions</span> <span class="o">=</span> <span class="nb">property</span><span class="p">(</span>
+        <span class="nb">getattr</span><span class="p">(</span><span class="n">FieldType</span><span class="p">,</span> <span class="s1">&#39;pointDataDimensionCount&#39;</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">FieldType</span><span class="p">,</span> <span class="s1">&#39;pointDimensionCount&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)),</span>
+        <span class="k">lambda</span> <span class="bp">self</span><span class="p">,</span> <span class="n">count</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">setDimensions</span><span class="p">(</span><span class="n">count</span><span class="p">,</span> <span class="n">Long</span><span class="o">.</span><span class="n">BYTES</span><span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">docValuesType</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">indexOptions</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">dimensions</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="o">**</span><span class="n">settings</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Field</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">properties</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">settings</span><span class="p">):</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">settings</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">settings</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s2">&quot;&#39;Field&#39; object has not property &#39;</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">dimensions</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dimensions</span> <span class="o">=</span> <span class="n">dimensions</span>
+        <span class="k">if</span> <span class="n">indexOptions</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">indexOptions</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">index</span><span class="o">.</span><span class="n">IndexOptions</span><span class="p">,</span> <span class="n">indexOptions</span><span class="o">.</span><span class="n">upper</span><span class="p">())</span>
+        <span class="k">if</span> <span class="n">docValuesType</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">docValuesType</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">index</span><span class="o">.</span><span class="n">DocValuesType</span><span class="p">,</span> <span class="n">docValuesType</span><span class="o">.</span><span class="n">upper</span><span class="p">())</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">docValueClass</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">document</span><span class="p">,</span> <span class="n">docValuesType</span><span class="o">.</span><span class="n">title</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;DocValuesField&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">stored</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">indexed</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimensions</span><span class="p">:</span>
+                <span class="n">settings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">settings</span>
+                <span class="k">del</span> <span class="n">settings</span><span class="p">[</span><span class="s1">&#39;docValuesType&#39;</span><span class="p">]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">docValueLess</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">settings</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">stored</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">indexed</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">docvalues</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimensions</span>
+
+<div class="viewcode-block" id="Field.String"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.documents.Field.String">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">String</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">tokenized</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">omitNorms</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">indexOptions</span><span class="o">=</span><span class="s1">&#39;DOCS&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">settings</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Field&#39;</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return Field with default settings for strings.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">tokenized</span><span class="o">=</span><span class="n">tokenized</span><span class="p">,</span> <span class="n">omitNorms</span><span class="o">=</span><span class="n">omitNorms</span><span class="p">,</span> <span class="n">indexOptions</span><span class="o">=</span><span class="n">indexOptions</span><span class="p">,</span> <span class="o">**</span><span class="n">settings</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Field.Text"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.documents.Field.Text">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">Text</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">indexOptions</span><span class="o">=</span><span class="s1">&#39;DOCS_AND_FREQS_AND_POSITIONS&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">settings</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Field&#39;</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return Field with default settings for text.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">indexOptions</span><span class="o">=</span><span class="n">indexOptions</span><span class="p">,</span> <span class="o">**</span><span class="n">settings</span><span class="p">)</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">indexed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">indexOptions</span> <span class="o">!=</span> <span class="n">index</span><span class="o">.</span><span class="n">IndexOptions</span><span class="o">.</span><span class="n">NONE</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">docvalues</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">docValuesType</span> <span class="o">!=</span> <span class="n">index</span><span class="o">.</span><span class="n">DocValuesType</span><span class="o">.</span><span class="n">NONE</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">settings</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;dict representation of settings&quot;&quot;&quot;</span>
+        <span class="n">defaults</span> <span class="o">=</span> <span class="n">FieldType</span><span class="p">()</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;dimensions&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimensions</span><span class="p">}</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimensions</span> <span class="k">else</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">Field</span><span class="o">.</span><span class="n">properties</span><span class="p">:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">value</span> <span class="o">!=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">defaults</span><span class="p">,</span> <span class="n">name</span><span class="p">)():</span>
+                <span class="n">result</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span>
+
+<div class="viewcode-block" id="Field.items"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.documents.Field.items">[docs]</a>    <span class="k">def</span> <span class="nf">items</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">values</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">document</span><span class="o">.</span><span class="n">Field</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;Generate lucene Fields suitable for adding to a document.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">docvalues</span><span class="p">:</span>
+            <span class="n">types</span> <span class="o">=</span> <span class="p">{</span><span class="nb">int</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">:</span> <span class="n">util</span><span class="o">.</span><span class="n">NumericUtils</span><span class="o">.</span><span class="n">doubleToSortableLong</span><span class="p">}</span>
+            <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">docValueClass</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">types</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">value</span><span class="p">),</span> <span class="n">util</span><span class="o">.</span><span class="n">BytesRef</span><span class="p">)(</span><span class="n">value</span><span class="p">))</span>
+            <span class="bp">self</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;docValueLess&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimensions</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+                    <span class="k">yield</span> <span class="n">document</span><span class="o">.</span><span class="n">LongPoint</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">yield</span> <span class="n">document</span><span class="o">.</span><span class="n">DoublePoint</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">indexed</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="n">document</span><span class="o">.</span><span class="n">Field</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">stored</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="n">document</span><span class="o">.</span><span class="n">StoredField</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="NestedField"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.documents.NestedField">[docs]</a><span class="k">class</span> <span class="nc">NestedField</span><span class="p">(</span><span class="n">Field</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Field which indexes every component into its own field.</span>
+
+<span class="sd">    Original value may be stored for convenience.</span>
+
+<span class="sd">    :param sep: field separator used on name and values</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">sep</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">settings</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">Field</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">settings</span><span class="p">)</span><span class="o">.</span><span class="n">settings</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sep</span> <span class="o">=</span> <span class="n">sep</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">names</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+
+<div class="viewcode-block" id="NestedField.values"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.documents.NestedField.values">[docs]</a>    <span class="k">def</span> <span class="nf">values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;Generate component field values in order.&quot;&quot;&quot;</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sep</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
+        <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">sep</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">value</span><span class="p">[:</span><span class="n">index</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="NestedField.items"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.documents.NestedField.items">[docs]</a>    <span class="k">def</span> <span class="nf">items</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">values</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">document</span><span class="o">.</span><span class="n">Field</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;Generate indexed component fields.&quot;&quot;&quot;</span>
+        <span class="n">field</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;docValueLess&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">text</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">names</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="n">value</span><span class="p">)):</span>
+                <span class="k">yield</span> <span class="n">document</span><span class="o">.</span><span class="n">Field</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">field</span><span class="p">)</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">docvalues</span><span class="p">:</span>
+                    <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">docValueClass</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">util</span><span class="o">.</span><span class="n">BytesRef</span><span class="p">(</span><span class="n">text</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="NestedField.prefix"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.documents.NestedField.prefix">[docs]</a>    <span class="k">def</span> <span class="nf">prefix</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Query</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return prefix query of the closest possible prefixed field.&quot;&quot;&quot;</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sep</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Query</span><span class="o">.</span><span class="n">prefix</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">names</span><span class="p">[</span><span class="n">index</span><span class="p">],</span> <span class="n">value</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="NestedField.range"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.documents.NestedField.range">[docs]</a>    <span class="k">def</span> <span class="nf">range</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Query</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return range query of the closest possible prefixed field.&quot;&quot;&quot;</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sep</span><span class="p">)</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">)</span> <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Query</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">names</span><span class="p">[</span><span class="n">index</span><span class="p">],</span> <span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">,</span> <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="DateTimeField"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.documents.DateTimeField">[docs]</a><span class="k">class</span> <span class="nc">DateTimeField</span><span class="p">(</span><span class="n">Field</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Field which indexes datetimes as Point fields of timestamps.</span>
+
+<span class="sd">    Supports datetimes, dates, and any prefix of time tuples.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">dimensions</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">settings</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">dimensions</span><span class="o">=</span><span class="n">dimensions</span><span class="p">,</span> <span class="o">**</span><span class="n">settings</span><span class="p">)</span>
+
+<div class="viewcode-block" id="DateTimeField.timestamp"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.documents.DateTimeField.timestamp">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">timestamp</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">date</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return utc timestamp from date or time tuple.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">date</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">calendar</span><span class="o">.</span><span class="n">timegm</span><span class="p">(</span><span class="n">date</span><span class="o">.</span><span class="n">timetuple</span><span class="p">())</span> <span class="o">+</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">date</span><span class="p">,</span> <span class="s1">&#39;microsecond&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">*</span> <span class="mf">1e-6</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">calendar</span><span class="o">.</span><span class="n">timegm</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">date</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)[</span><span class="nb">len</span><span class="p">(</span><span class="n">date</span><span class="p">)</span> <span class="p">:]))</span></div>
+
+<div class="viewcode-block" id="DateTimeField.items"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.documents.DateTimeField.items">[docs]</a>    <span class="k">def</span> <span class="nf">items</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">dates</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">document</span><span class="o">.</span><span class="n">Field</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;Generate lucene NumericFields of timestamps.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">(</span><span class="o">*</span><span class="nb">map</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">timestamp</span><span class="p">,</span> <span class="n">dates</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="DateTimeField.range"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.documents.DateTimeField.range">[docs]</a>    <span class="k">def</span> <span class="nf">range</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">,</span> <span class="o">**</span><span class="n">inclusive</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Query</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return NumericRangeQuery of timestamps.&quot;&quot;&quot;</span>
+        <span class="n">interval</span> <span class="o">=</span> <span class="p">(</span><span class="n">date</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">timestamp</span><span class="p">(</span><span class="n">date</span><span class="p">)</span> <span class="k">for</span> <span class="n">date</span> <span class="ow">in</span> <span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">Query</span><span class="o">.</span><span class="n">ranges</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">interval</span><span class="p">,</span> <span class="o">**</span><span class="n">inclusive</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DateTimeField.prefix"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.documents.DateTimeField.prefix">[docs]</a>    <span class="k">def</span> <span class="nf">prefix</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">date</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Query</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return range query which matches the date prefix.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">date</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">):</span>
+            <span class="n">date</span> <span class="o">=</span> <span class="n">date</span><span class="o">.</span><span class="n">timetuple</span><span class="p">()[:</span> <span class="mi">6</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">date</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">)</span> <span class="k">else</span> <span class="mi">3</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">date</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">date</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">12</span><span class="p">:</span>  <span class="c1"># month must be valid</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="n">date</span><span class="p">,</span> <span class="p">(</span><span class="n">date</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="n">date</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">date</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">+</span> <span class="p">(</span><span class="n">date</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,))</span></div>
+
+<div class="viewcode-block" id="DateTimeField.duration"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.documents.DateTimeField.duration">[docs]</a>    <span class="k">def</span> <span class="nf">duration</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">date</span><span class="p">,</span> <span class="n">days</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="o">**</span><span class="n">delta</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Query</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return date range query within time span of date.</span>
+
+<span class="sd">        :param date: origin date or tuple</span>
+<span class="sd">        :param days,delta: timedelta parameters</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">date</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">):</span>
+            <span class="n">date</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">date</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="nb">len</span><span class="p">(</span><span class="n">date</span><span class="p">)</span> <span class="p">:]))</span>
+        <span class="n">delta</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="p">,</span> <span class="o">**</span><span class="n">delta</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="o">*</span><span class="nb">sorted</span><span class="p">([</span><span class="n">date</span><span class="p">,</span> <span class="n">date</span> <span class="o">+</span> <span class="n">delta</span><span class="p">]),</span> <span class="n">upper</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DateTimeField.within"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.documents.DateTimeField.within">[docs]</a>    <span class="k">def</span> <span class="nf">within</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">days</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">weeks</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">utc</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">delta</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Query</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return date range query within current time and delta.</span>
+
+<span class="sd">        If the delta is an exact number of days, then dates will be used.</span>
+
+<span class="sd">        :param days,weeks: number of days to offset from today</span>
+<span class="sd">        :param utc: optionally use utc instead of local time</span>
+<span class="sd">        :param delta: additional timedelta parameters</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">date</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">utcnow</span><span class="p">()</span> <span class="k">if</span> <span class="n">utc</span> <span class="k">else</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">days</span> <span class="o">+</span> <span class="n">weeks</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span> <span class="ow">or</span> <span class="n">delta</span><span class="p">):</span>
+            <span class="n">date</span> <span class="o">=</span> <span class="n">date</span><span class="o">.</span><span class="n">date</span><span class="p">()</span>  <span class="c1"># type: ignore</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">duration</span><span class="p">(</span><span class="n">date</span><span class="p">,</span> <span class="n">days</span><span class="p">,</span> <span class="n">weeks</span><span class="o">=</span><span class="n">weeks</span><span class="p">,</span> <span class="o">**</span><span class="n">delta</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="SpatialField"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.documents.SpatialField">[docs]</a><span class="k">class</span> <span class="nc">SpatialField</span><span class="p">(</span><span class="n">Field</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Geospatial points, indexed with optional docvalues.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">dimensions</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">settings</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">dimensions</span><span class="o">=</span><span class="n">dimensions</span><span class="p">,</span> <span class="o">**</span><span class="n">settings</span><span class="p">)</span>
+
+<div class="viewcode-block" id="SpatialField.items"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.documents.SpatialField.items">[docs]</a>    <span class="k">def</span> <span class="nf">items</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">points</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">document</span><span class="o">.</span><span class="n">Field</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;Generate lucene LatLon fields from points (lng, lat).&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">lng</span><span class="p">,</span> <span class="n">lat</span> <span class="ow">in</span> <span class="n">points</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">document</span><span class="o">.</span><span class="n">LatLonPoint</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">lat</span><span class="p">,</span> <span class="n">lng</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">docvalues</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">lng</span><span class="p">,</span> <span class="n">lat</span> <span class="ow">in</span> <span class="n">points</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="n">document</span><span class="o">.</span><span class="n">LatLonDocValuesField</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">lat</span><span class="p">,</span> <span class="n">lng</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SpatialField.within"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.documents.SpatialField.within">[docs]</a>    <span class="k">def</span> <span class="nf">within</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lng</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">lat</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">distance</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">search</span><span class="o">.</span><span class="n">Query</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return range queries for any tiles which could be within distance of given point.</span>
+
+<span class="sd">        :param lng,lat: point</span>
+<span class="sd">        :param distance: search radius in meters</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">document</span><span class="o">.</span><span class="n">LatLonPoint</span><span class="o">.</span><span class="n">newDistanceQuery</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">lat</span><span class="p">,</span> <span class="n">lng</span><span class="p">,</span> <span class="n">distance</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SpatialField.distances"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.documents.SpatialField.distances">[docs]</a>    <span class="k">def</span> <span class="nf">distances</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lng</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">lat</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">search</span><span class="o">.</span><span class="n">Query</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return distance SortField.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">document</span><span class="o">.</span><span class="n">LatLonDocValuesField</span><span class="o">.</span><span class="n">newDistanceSort</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">lat</span><span class="p">,</span> <span class="n">lng</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="Document"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.documents.Document">[docs]</a><span class="k">class</span> <span class="nc">Document</span><span class="p">(</span><span class="nb">dict</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Multimapping of field names to values, but default getters return the first value.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">doc</span><span class="p">:</span> <span class="n">document</span><span class="o">.</span><span class="n">Document</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">doc</span><span class="o">.</span><span class="n">iterator</span><span class="p">():</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">convert</span><span class="p">(</span><span class="n">field</span><span class="o">.</span><span class="n">numericValue</span><span class="p">()</span> <span class="ow">or</span> <span class="n">field</span><span class="o">.</span><span class="n">stringValue</span><span class="p">()</span> <span class="ow">or</span> <span class="n">field</span><span class="o">.</span><span class="n">binaryValue</span><span class="p">())</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">field</span><span class="o">.</span><span class="n">name</span><span class="p">(),</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__getitem__</span><span class="p">(</span><span class="n">name</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+<div class="viewcode-block" id="Document.get"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.documents.Document.get">[docs]</a>    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="p">[</span><span class="n">default</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="Document.getlist"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.documents.Document.getlist">[docs]</a>    <span class="k">def</span> <span class="nf">getlist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return list of all values for given field.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="p">[])</span></div>
+
+<div class="viewcode-block" id="Document.dict"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.documents.Document.dict">[docs]</a>    <span class="k">def</span> <span class="nf">dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">names</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">**</span><span class="n">defaults</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return dict representation of document.</span>
+
+<span class="sd">        :param names: names of multi-valued fields to return as a list</span>
+<span class="sd">        :param defaults: include only given fields, using default values as necessary</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">defaults</span><span class="o">.</span><span class="n">update</span><span class="p">((</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="p">[</span><span class="n">name</span><span class="p">])</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span><span class="n">defaults</span> <span class="ow">or</span> <span class="bp">self</span><span class="p">)</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">)</span>
+        <span class="n">defaults</span><span class="o">.</span><span class="n">update</span><span class="p">((</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">getlist</span><span class="p">(</span><span class="n">name</span><span class="p">))</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">defaults</span></div></div>
+
+
+<div class="viewcode-block" id="Hit"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.documents.Hit">[docs]</a><span class="k">class</span> <span class="nc">Hit</span><span class="p">(</span><span class="n">Document</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A Document from a search result, with :attr:`id`, :attr:`score`, and optional :attr:`sortkeys`.</span>
+
+<span class="sd">    .. versionchanged:: 2.4 keys renamed to :attr:`sortkeys`</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">doc</span><span class="p">:</span> <span class="n">document</span><span class="o">.</span><span class="n">Document</span><span class="p">,</span> <span class="nb">id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">score</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">sortkeys</span><span class="o">=</span><span class="p">()):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">score</span> <span class="o">=</span> <span class="nb">id</span><span class="p">,</span> <span class="n">score</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sortkeys</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">convert</span><span class="p">,</span> <span class="n">sortkeys</span><span class="p">))</span>
+
+<div class="viewcode-block" id="Hit.dict"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.documents.Hit.dict">[docs]</a>    <span class="k">def</span> <span class="nf">dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">names</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">**</span><span class="n">defaults</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return dict representation of document with __id__, __score__, and any sort __keys__.&quot;&quot;&quot;</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">dict</span><span class="p">(</span><span class="o">*</span><span class="n">names</span><span class="p">,</span> <span class="o">**</span><span class="n">defaults</span><span class="p">)</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">__id__</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">__score__</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">score</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sortkeys</span><span class="p">:</span>
+            <span class="n">result</span><span class="p">[</span><span class="s1">&#39;__sortkeys__&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sortkeys</span>
+        <span class="k">return</span> <span class="n">result</span></div></div>
+
+
+<div class="viewcode-block" id="Hits"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.documents.Hits">[docs]</a><span class="k">class</span> <span class="nc">Hits</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Search results: lazily evaluated and memory efficient.</span>
+
+<span class="sd">    Provides a read-only sequence interface to hit objects.</span>
+<span class="sd">    .. versionchanged:: 2.3 maxscore option removed; computed property instead</span>
+
+<span class="sd">    :param searcher: `IndexSearcher`_ which can retrieve documents</span>
+<span class="sd">    :param scoredocs: lucene ScoreDocs</span>
+<span class="sd">    :param count: total number of hits; float indicates estimate</span>
+<span class="sd">    :param fields: optional field selectors</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">searcher</span><span class="p">,</span> <span class="n">scoredocs</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">fields</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">searcher</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">scoredocs</span> <span class="o">=</span> <span class="n">searcher</span><span class="p">,</span> <span class="n">scoredocs</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">count</span><span class="p">,</span> <span class="s1">&#39;relation&#39;</span><span class="p">):</span>  <span class="c1"># pragma: no cover</span>
+            <span class="bp">cls</span> <span class="o">=</span> <span class="nb">int</span> <span class="k">if</span> <span class="n">count</span><span class="o">.</span><span class="n">relation</span> <span class="o">==</span> <span class="n">search</span><span class="o">.</span><span class="n">TotalHits</span><span class="o">.</span><span class="n">Relation</span><span class="o">.</span><span class="n">EQUAL_TO</span> <span class="k">else</span> <span class="nb">float</span>
+            <span class="n">count</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="n">count</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">count</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">fields</span> <span class="o">=</span> <span class="n">count</span><span class="p">,</span> <span class="n">fields</span>
+
+<div class="viewcode-block" id="Hits.select"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.documents.Hits.select">[docs]</a>    <span class="k">def</span> <span class="nf">select</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">fields</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Only load selected fields.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fields</span> <span class="o">=</span> <span class="n">HashSet</span><span class="p">(</span><span class="n">Arrays</span><span class="o">.</span><span class="n">asList</span><span class="p">(</span><span class="n">fields</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="Hits.__len__"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.documents.Hits.__len__">[docs]</a>    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">scoredocs</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Hits.__getitem__"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.documents.Hits.__getitem__">[docs]</a>    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="nb">slice</span><span class="p">):</span>
+            <span class="n">scoredocs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">scoredocs</span><span class="o">.</span><span class="fm">__getitem__</span><span class="p">,</span> <span class="nb">range</span><span class="p">(</span><span class="o">*</span><span class="n">index</span><span class="o">.</span><span class="n">indices</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)))))</span>
+            <span class="k">return</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)(</span><span class="bp">self</span><span class="o">.</span><span class="n">searcher</span><span class="p">,</span> <span class="n">scoredocs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">count</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">)</span>
+        <span class="n">scoredoc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scoredocs</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+        <span class="n">keys</span> <span class="o">=</span> <span class="n">search</span><span class="o">.</span><span class="n">FieldDoc</span><span class="o">.</span><span class="n">cast_</span><span class="p">(</span><span class="n">scoredoc</span><span class="p">)</span><span class="o">.</span><span class="n">fields</span> <span class="k">if</span> <span class="n">search</span><span class="o">.</span><span class="n">FieldDoc</span><span class="o">.</span><span class="n">instance_</span><span class="p">(</span><span class="n">scoredoc</span><span class="p">)</span> <span class="k">else</span> <span class="p">()</span>
+        <span class="n">doc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">searcher</span><span class="o">.</span><span class="n">doc</span><span class="p">(</span><span class="n">scoredoc</span><span class="o">.</span><span class="n">doc</span><span class="p">,</span> <span class="o">*</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">]</span> <span class="o">*</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">)))</span>
+        <span class="k">return</span> <span class="n">Hit</span><span class="p">(</span><span class="n">doc</span><span class="p">,</span> <span class="n">scoredoc</span><span class="o">.</span><span class="n">doc</span><span class="p">,</span> <span class="n">scoredoc</span><span class="o">.</span><span class="n">score</span><span class="p">,</span> <span class="n">keys</span><span class="p">)</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">ids</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="nb">map</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">attrgetter</span><span class="p">(</span><span class="s1">&#39;doc&#39;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">scoredocs</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">scores</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="nb">map</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">attrgetter</span><span class="p">(</span><span class="s1">&#39;score&#39;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">scoredocs</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">maxscore</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;max score of present hits; not necessarily of all matches&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">scores</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="s1">&#39;nan&#39;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Hits.items"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.documents.Hits.items">[docs]</a>    <span class="k">def</span> <span class="nf">items</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">tuple</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;Generate zipped ids and scores.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">map</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">attrgetter</span><span class="p">(</span><span class="s1">&#39;doc&#39;</span><span class="p">,</span> <span class="s1">&#39;score&#39;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">scoredocs</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Hits.highlights"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.documents.Hits.highlights">[docs]</a>    <span class="k">def</span> <span class="nf">highlights</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="n">search</span><span class="o">.</span><span class="n">Query</span><span class="p">,</span> <span class="o">**</span><span class="n">fields</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;Generate highlighted fields for each hit.</span>
+
+<span class="sd">        :param query: lucene Query</span>
+<span class="sd">        :param field: mapping of fields to maxinum number of passages</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">mapping</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">searcher</span><span class="o">.</span><span class="n">highlighter</span><span class="o">.</span><span class="n">highlightFields</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">fields</span><span class="p">),</span> <span class="n">query</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ids</span><span class="p">),</span> <span class="nb">list</span><span class="p">(</span><span class="n">fields</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
+        <span class="n">mapping</span> <span class="o">=</span> <span class="p">{</span><span class="n">field</span><span class="p">:</span> <span class="n">lucene</span><span class="o">.</span><span class="n">JArray_string</span><span class="o">.</span><span class="n">cast_</span><span class="p">(</span><span class="n">mapping</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">field</span><span class="p">))</span> <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">fields</span><span class="p">}</span>
+        <span class="k">return</span> <span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">mapping</span><span class="p">,</span> <span class="n">values</span><span class="p">))</span> <span class="k">for</span> <span class="n">values</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">mapping</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span></div>
+
+<div class="viewcode-block" id="Hits.docvalues"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.documents.Hits.docvalues">[docs]</a>    <span class="k">def</span> <span class="nf">docvalues</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return mapping of docs to docvalues.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">searcher</span><span class="o">.</span><span class="n">docvalues</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ids</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Hits.groupby"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.documents.Hits.groupby">[docs]</a>    <span class="k">def</span> <span class="nf">groupby</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">count</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">docs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Groups&#39;</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return ordered list of `Hits`_ grouped by value of function applied to doc ids.</span>
+
+<span class="sd">        Optionally limit the number of groups and docs per group.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">groups</span> <span class="o">=</span> <span class="n">collections</span><span class="o">.</span><span class="n">OrderedDict</span><span class="p">()</span>  <span class="c1"># type: dict</span>
+        <span class="k">for</span> <span class="n">scoredoc</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">scoredocs</span><span class="p">:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="n">scoredoc</span><span class="o">.</span><span class="n">doc</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">group</span> <span class="o">=</span> <span class="n">groups</span><span class="p">[</span><span class="n">value</span><span class="p">]</span>
+            <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                <span class="n">group</span> <span class="o">=</span> <span class="n">groups</span><span class="p">[</span><span class="n">value</span><span class="p">]</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)(</span><span class="bp">self</span><span class="o">.</span><span class="n">searcher</span><span class="p">,</span> <span class="p">[],</span> <span class="n">fields</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">)</span>
+                <span class="n">group</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">value</span>
+            <span class="n">group</span><span class="o">.</span><span class="n">scoredocs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">scoredoc</span><span class="p">)</span>
+        <span class="n">groups</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">groups</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>  <span class="c1"># type: ignore</span>
+        <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">groups</span><span class="p">:</span>
+            <span class="n">group</span><span class="o">.</span><span class="n">count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">group</span><span class="p">)</span>
+            <span class="n">group</span><span class="o">.</span><span class="n">scoredocs</span> <span class="o">=</span> <span class="n">group</span><span class="o">.</span><span class="n">scoredocs</span><span class="p">[:</span><span class="n">docs</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">Groups</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">searcher</span><span class="p">,</span> <span class="n">groups</span><span class="p">[:</span><span class="n">count</span><span class="p">],</span> <span class="nb">len</span><span class="p">(</span><span class="n">groups</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Hits.filter"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.documents.Hits.filter">[docs]</a>    <span class="k">def</span> <span class="nf">filter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Hits&#39;</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return `Hits`_ filtered by function applied to doc ids.&quot;&quot;&quot;</span>
+        <span class="n">scoredocs</span> <span class="o">=</span> <span class="p">[</span><span class="n">scoredoc</span> <span class="k">for</span> <span class="n">scoredoc</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">scoredocs</span> <span class="k">if</span> <span class="n">func</span><span class="p">(</span><span class="n">scoredoc</span><span class="o">.</span><span class="n">doc</span><span class="p">)]</span>
+        <span class="k">return</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)(</span><span class="bp">self</span><span class="o">.</span><span class="n">searcher</span><span class="p">,</span> <span class="n">scoredocs</span><span class="p">,</span> <span class="n">fields</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Hits.sorted"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.documents.Hits.sorted">[docs]</a>    <span class="k">def</span> <span class="nf">sorted</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Hits&#39;</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return `Hits`_ sorted by key function applied to doc ids.&quot;&quot;&quot;</span>
+        <span class="n">scoredocs</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">scoredocs</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">scoredoc</span><span class="p">:</span> <span class="n">key</span><span class="p">(</span><span class="n">scoredoc</span><span class="o">.</span><span class="n">doc</span><span class="p">),</span> <span class="n">reverse</span><span class="o">=</span><span class="n">reverse</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)(</span><span class="bp">self</span><span class="o">.</span><span class="n">searcher</span><span class="p">,</span> <span class="n">scoredocs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">count</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="Groups"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.documents.Groups">[docs]</a><span class="k">class</span> <span class="nc">Groups</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Sequence of grouped `Hits`_.&quot;&quot;&quot;</span>
+
+    <span class="n">select</span> <span class="o">=</span> <span class="n">Hits</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">[</span><span class="s1">&#39;select&#39;</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">searcher</span><span class="p">,</span> <span class="n">groupdocs</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">count</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">fields</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">searcher</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">groupdocs</span> <span class="o">=</span> <span class="n">searcher</span><span class="p">,</span> <span class="n">groupdocs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">count</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">fields</span> <span class="o">=</span> <span class="n">count</span><span class="p">,</span> <span class="n">fields</span>
+
+<div class="viewcode-block" id="Groups.__len__"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.documents.Groups.__len__">[docs]</a>    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">groupdocs</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Groups.__getitem__"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.documents.Groups.__getitem__">[docs]</a>    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
+        <span class="n">hits</span> <span class="o">=</span> <span class="n">groupdocs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">groupdocs</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">groupdocs</span><span class="p">,</span> <span class="n">grouping</span><span class="o">.</span><span class="n">GroupDocs</span><span class="p">):</span>
+            <span class="n">hits</span> <span class="o">=</span> <span class="n">Hits</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">searcher</span><span class="p">,</span> <span class="n">groupdocs</span><span class="o">.</span><span class="n">scoreDocs</span><span class="p">,</span> <span class="n">groupdocs</span><span class="o">.</span><span class="n">totalHits</span><span class="p">)</span>
+            <span class="n">hits</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">convert</span><span class="p">(</span><span class="n">groupdocs</span><span class="o">.</span><span class="n">groupValue</span><span class="p">)</span>
+        <span class="n">hits</span><span class="o">.</span><span class="n">fields</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fields</span>
+        <span class="k">return</span> <span class="n">hits</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">facets</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;mapping of field values and counts&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">hits</span><span class="o">.</span><span class="n">value</span><span class="p">:</span> <span class="n">hits</span><span class="o">.</span><span class="n">count</span> <span class="k">for</span> <span class="n">hits</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="GroupingSearch"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.documents.GroupingSearch">[docs]</a><span class="k">class</span> <span class="nc">GroupingSearch</span><span class="p">(</span><span class="n">grouping</span><span class="o">.</span><span class="n">GroupingSearch</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Inherited lucene GroupingSearch with optimized faceting.</span>
+
+<span class="sd">    :param field: unique field name to group by</span>
+<span class="sd">    :param sort: lucene Sort to order groups and docs</span>
+<span class="sd">    :param cache: use unlimited caching</span>
+<span class="sd">    :param attrs: additional attributes to set</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">sort</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cache</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">attrs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">field</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">field</span> <span class="o">=</span> <span class="n">field</span>
+        <span class="k">if</span> <span class="n">sort</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">groupSort</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sortWithinGroup</span> <span class="o">=</span> <span class="n">sort</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fillSortFields</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="n">cache</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">setCachingInMB</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="s1">&#39;inf&#39;</span><span class="p">),</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">attrs</span><span class="p">:</span>
+            <span class="nb">getattr</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span> <span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="fm">__set__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attrs</span><span class="p">[</span><span class="n">name</span><span class="p">])</span>
+
+<div class="viewcode-block" id="GroupingSearch.__len__"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.documents.GroupingSearch.__len__">[docs]</a>    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">allMatchingGroups</span><span class="o">.</span><span class="n">size</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="GroupingSearch.__iter__"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.documents.GroupingSearch.__iter__">[docs]</a>    <span class="k">def</span> <span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">map</span><span class="p">(</span><span class="n">convert</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">allMatchingGroups</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="GroupingSearch.search"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.documents.GroupingSearch.search">[docs]</a>    <span class="k">def</span> <span class="nf">search</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">searcher</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="n">search</span><span class="o">.</span><span class="n">Query</span><span class="p">,</span> <span class="n">count</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">start</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Groups</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Run query and return `Groups`_.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">count</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">count</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">index</span><span class="o">.</span><span class="n">DocValues</span><span class="o">.</span><span class="n">getSorted</span><span class="p">(</span><span class="n">reader</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">field</span><span class="p">)</span><span class="o">.</span><span class="n">valueCount</span> <span class="k">for</span> <span class="n">reader</span> <span class="ow">in</span> <span class="n">searcher</span><span class="o">.</span><span class="n">readers</span><span class="p">)</span> <span class="ow">or</span> <span class="mi">1</span>
+        <span class="n">topgroups</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">searcher</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">count</span> <span class="o">-</span> <span class="n">start</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Groups</span><span class="p">(</span><span class="n">searcher</span><span class="p">,</span> <span class="n">topgroups</span><span class="o">.</span><span class="n">groups</span><span class="p">,</span> <span class="n">topgroups</span><span class="o">.</span><span class="n">totalHitCount</span><span class="p">)</span></div></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, Aric Coady
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

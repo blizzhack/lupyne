@@ -1,0 +1,845 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>lupyne.engine.indexers &mdash; lupyne 2.4 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../../_static/language_data.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> lupyne
+          
+
+          
+            
+            <img src="../../../_static/logo.png" class="logo" alt="Logo"/>
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                2.4
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../engine.html">engine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../server.html">server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples.html">examples</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">lupyne</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>lupyne.engine.indexers</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for lupyne.engine.indexers</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">contextlib</span>
+<span class="kn">import</span> <span class="nn">itertools</span>
+<span class="kn">import</span> <span class="nn">operator</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">Mapping</span>
+<span class="kn">import</span> <span class="nn">lucene</span>
+<span class="kn">from</span> <span class="nn">java.io</span> <span class="kn">import</span> <span class="n">File</span><span class="p">,</span> <span class="n">IOException</span><span class="p">,</span> <span class="n">StringReader</span>
+<span class="kn">from</span> <span class="nn">java.util</span> <span class="kn">import</span> <span class="n">Arrays</span><span class="p">,</span> <span class="n">HashSet</span>
+<span class="kn">from</span> <span class="nn">org.apache.lucene</span> <span class="kn">import</span> <span class="n">analysis</span><span class="p">,</span> <span class="n">document</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">queries</span><span class="p">,</span> <span class="n">search</span><span class="p">,</span> <span class="n">store</span><span class="p">,</span> <span class="n">util</span>
+<span class="kn">from</span> <span class="nn">org.apache.lucene.search</span> <span class="kn">import</span> <span class="n">spans</span><span class="p">,</span> <span class="n">spell</span><span class="p">,</span> <span class="n">uhighlight</span>
+<span class="kn">from</span> <span class="nn">.analyzers</span> <span class="kn">import</span> <span class="n">Analyzer</span>
+<span class="kn">from</span> <span class="nn">.queries</span> <span class="kn">import</span> <span class="n">Query</span><span class="p">,</span> <span class="n">DocValues</span><span class="p">,</span> <span class="n">SpellParser</span>
+<span class="kn">from</span> <span class="nn">.documents</span> <span class="kn">import</span> <span class="n">Field</span><span class="p">,</span> <span class="n">Document</span><span class="p">,</span> <span class="n">Hits</span><span class="p">,</span> <span class="n">GroupingSearch</span><span class="p">,</span> <span class="n">Groups</span>
+<span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">suppress</span><span class="p">,</span> <span class="n">Atomic</span><span class="p">,</span> <span class="n">SpellChecker</span>
+
+
+<span class="k">class</span> <span class="nc">closing</span><span class="p">(</span><span class="nb">set</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Manage lifespan of registered objects, similar to contextlib.closing.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__del__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+            <span class="n">obj</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">analyzer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">analyzer</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">analyzer</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">analyzer</span> <span class="o">=</span> <span class="n">analysis</span><span class="o">.</span><span class="n">standard</span><span class="o">.</span><span class="n">StandardAnalyzer</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">analyzer</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">analyzer</span>
+
+    <span class="k">def</span> <span class="nf">directory</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">directory</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">directory</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">directory</span> <span class="o">=</span> <span class="n">store</span><span class="o">.</span><span class="n">RAMDirectory</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">directory</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">directory</span> <span class="o">=</span> <span class="n">store</span><span class="o">.</span><span class="n">FSDirectory</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">File</span><span class="p">(</span><span class="n">directory</span><span class="p">)</span><span class="o">.</span><span class="n">toPath</span><span class="p">())</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">directory</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">directory</span>
+
+    <span class="k">def</span> <span class="nf">reader</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reader</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">reader</span><span class="p">,</span> <span class="n">index</span><span class="o">.</span><span class="n">IndexReader</span><span class="p">):</span>
+            <span class="n">reader</span><span class="o">.</span><span class="n">incRef</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">reader</span><span class="p">,</span> <span class="n">index</span><span class="o">.</span><span class="n">IndexWriter</span><span class="p">):</span>
+            <span class="n">reader</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">DirectoryReader</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">reader</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">reader</span><span class="p">,</span> <span class="n">Atomic</span><span class="p">):</span>
+            <span class="n">reader</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">DirectoryReader</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">directory</span><span class="p">(</span><span class="n">reader</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">reader</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">MultiReader</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">reader</span><span class="p">,</span> <span class="n">reader</span><span class="p">)))</span>
+        <span class="k">return</span> <span class="n">reader</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="nd">@contextlib</span><span class="o">.</span><span class="n">contextmanager</span>
+    <span class="k">def</span> <span class="nf">store</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">directory</span><span class="p">):</span>
+        <span class="bp">self</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">()</span>
+        <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">directory</span><span class="p">(</span><span class="n">directory</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">copy</span><span class="p">(</span><span class="n">commit</span><span class="p">,</span> <span class="n">dest</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Copy the index commit to the destination directory.</span>
+
+<span class="sd">    Optimized to use hard links if the destination is a file system path.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dest</span><span class="p">,</span> <span class="n">store</span><span class="o">.</span><span class="n">Directory</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">filename</span> <span class="ow">in</span> <span class="n">commit</span><span class="o">.</span><span class="n">fileNames</span><span class="p">:</span>
+            <span class="n">dest</span><span class="o">.</span><span class="n">copyFrom</span><span class="p">(</span><span class="n">commit</span><span class="o">.</span><span class="n">directory</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">store</span><span class="o">.</span><span class="n">IOContext</span><span class="o">.</span><span class="n">DEFAULT</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">src</span> <span class="o">=</span> <span class="n">IndexSearcher</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">fget</span><span class="p">(</span><span class="n">commit</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">dest</span><span class="p">)</span> <span class="ow">or</span> <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">dest</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">filename</span> <span class="ow">in</span> <span class="n">commit</span><span class="o">.</span><span class="n">fileNames</span><span class="p">:</span>
+            <span class="n">paths</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">filename</span><span class="p">),</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">dest</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">link</span><span class="p">(</span><span class="o">*</span><span class="n">paths</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">samefile</span><span class="p">(</span><span class="o">*</span><span class="n">paths</span><span class="p">):</span>
+                    <span class="k">raise</span>
+
+
+<div class="viewcode-block" id="IndexReader"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.indexers.IndexReader">[docs]</a><span class="k">class</span> <span class="nc">IndexReader</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Delegated lucene IndexReader, with a mapping interface of ids to document objects.</span>
+
+<span class="sd">    :param reader: lucene IndexReader</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reader</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">indexReader</span> <span class="o">=</span> <span class="n">reader</span>
+
+    <span class="k">def</span> <span class="fm">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;indexReader&#39;</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">index</span><span class="o">.</span><span class="n">DirectoryReader</span><span class="o">.</span><span class="n">cast_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">indexReader</span><span class="p">),</span> <span class="n">name</span><span class="p">)</span>
+
+<div class="viewcode-block" id="IndexReader.__len__"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.indexers.IndexReader.__len__">[docs]</a>    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">numDocs</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="IndexReader.__contains__"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.indexers.IndexReader.__contains__">[docs]</a>    <span class="k">def</span> <span class="fm">__contains__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="n">bits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bits</span>
+        <span class="k">return</span> <span class="p">(</span><span class="mi">0</span> <span class="o">&lt;=</span> <span class="nb">id</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">maxDoc</span><span class="p">())</span> <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="n">bits</span> <span class="ow">or</span> <span class="n">bits</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">id</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="IndexReader.__iter__"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.indexers.IndexReader.__iter__">[docs]</a>    <span class="k">def</span> <span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+        <span class="n">ids</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">maxDoc</span><span class="p">())</span>
+        <span class="n">bits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bits</span>
+        <span class="k">return</span> <span class="nb">filter</span><span class="p">(</span><span class="n">bits</span><span class="o">.</span><span class="n">get</span><span class="p">,</span> <span class="n">ids</span><span class="p">)</span> <span class="k">if</span> <span class="n">bits</span> <span class="k">else</span> <span class="nb">iter</span><span class="p">(</span><span class="n">ids</span><span class="p">)</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">bits</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">util</span><span class="o">.</span><span class="n">Bits</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">index</span><span class="o">.</span><span class="n">MultiBits</span><span class="o">.</span><span class="n">getLiveDocs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">indexReader</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">directory</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">store</span><span class="o">.</span><span class="n">Directory</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;reader&#39;s lucene Directory&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="fm">__getattr__</span><span class="p">(</span><span class="s1">&#39;directory&#39;</span><span class="p">)()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">path</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;FSDirectory path&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">store</span><span class="o">.</span><span class="n">FSDirectory</span><span class="o">.</span><span class="n">cast_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">directory</span><span class="p">)</span><span class="o">.</span><span class="n">directory</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">timestamp</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;timestamp of reader&#39;s last commit&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">File</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">indexCommit</span><span class="o">.</span><span class="n">segmentsFileName</span><span class="p">)</span><span class="o">.</span><span class="n">lastModified</span><span class="p">()</span> <span class="o">*</span> <span class="mf">0.001</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">readers</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;segment readers&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">index</span><span class="o">.</span><span class="n">SegmentReader</span><span class="o">.</span><span class="n">cast_</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">reader</span><span class="p">())</span> <span class="k">for</span> <span class="n">context</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">leaves</span><span class="p">())</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">segments</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;segment filenames with document counts&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">reader</span><span class="o">.</span><span class="n">segmentName</span><span class="p">:</span> <span class="n">reader</span><span class="o">.</span><span class="n">numDocs</span><span class="p">()</span> <span class="k">for</span> <span class="n">reader</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">readers</span><span class="p">}</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">fieldinfos</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;mapping of field names to lucene FieldInfos&quot;&quot;&quot;</span>
+        <span class="n">fieldinfos</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">FieldInfos</span><span class="o">.</span><span class="n">getMergedFieldInfos</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">indexReader</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">fieldinfo</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">fieldinfo</span> <span class="k">for</span> <span class="n">fieldinfo</span> <span class="ow">in</span> <span class="n">fieldinfos</span><span class="o">.</span><span class="n">iterator</span><span class="p">()}</span>
+
+<div class="viewcode-block" id="IndexReader.suggest"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.indexers.IndexReader.suggest">[docs]</a>    <span class="k">def</span> <span class="nf">suggest</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">count</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">attrs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return spelling suggestions from DirectSpellChecker.</span>
+
+<span class="sd">        :param name: field name</span>
+<span class="sd">        :param value: term</span>
+<span class="sd">        :param count: maximum number of suggestions</span>
+<span class="sd">        :param attrs: DirectSpellChecker options</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">checker</span> <span class="o">=</span> <span class="n">spell</span><span class="o">.</span><span class="n">DirectSpellChecker</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="n">attrs</span><span class="p">:</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="n">checker</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">attrs</span><span class="p">[</span><span class="n">attr</span><span class="p">])</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">word</span><span class="o">.</span><span class="n">string</span> <span class="k">for</span> <span class="n">word</span> <span class="ow">in</span> <span class="n">checker</span><span class="o">.</span><span class="n">suggestSimilar</span><span class="p">(</span><span class="n">index</span><span class="o">.</span><span class="n">Term</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">),</span> <span class="n">count</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">indexReader</span><span class="p">)]</span></div>
+
+<div class="viewcode-block" id="IndexReader.sortfield"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.indexers.IndexReader.sortfield">[docs]</a>    <span class="k">def</span> <span class="nf">sortfield</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">search</span><span class="o">.</span><span class="n">SortField</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return lucene SortField, deriving the the type from FieldInfos if necessary.</span>
+
+<span class="sd">        :param name: field name</span>
+<span class="sd">        :param type: int, float, or name compatible with SortField constants</span>
+<span class="sd">        :param reverse: reverse flag used with sort</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">type</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="nb">type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fieldinfos</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">docValuesType</span><span class="o">.</span><span class="n">toString</span><span class="p">()</span>
+        <span class="nb">type</span> <span class="o">=</span> <span class="n">Field</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">search</span><span class="o">.</span><span class="n">SortField</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">search</span><span class="o">.</span><span class="n">SortField</span><span class="o">.</span><span class="n">Type</span><span class="p">,</span> <span class="nb">type</span><span class="p">),</span> <span class="n">reverse</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="IndexReader.docvalues"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.indexers.IndexReader.docvalues">[docs]</a>    <span class="k">def</span> <span class="nf">docvalues</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DocValues</span><span class="o">.</span><span class="n">Sorted</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return chained lucene DocValues, suitable for custom sorting or grouping.</span>
+
+<span class="sd">        Note multi-valued DocValues aren&#39;t thread-safe and only supported ordered iteration.</span>
+
+<span class="sd">        :param name: field name</span>
+<span class="sd">        :param type: int or float for converting values</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">type</span> <span class="o">=</span> <span class="p">{</span><span class="nb">int</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">:</span> <span class="n">util</span><span class="o">.</span><span class="n">NumericUtils</span><span class="o">.</span><span class="n">sortableLongToDouble</span><span class="p">}</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="n">util</span><span class="o">.</span><span class="n">BytesRef</span><span class="o">.</span><span class="n">utf8ToString</span><span class="p">)</span>
+        <span class="n">docValuesType</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fieldinfos</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">docValuesType</span><span class="o">.</span><span class="n">toString</span><span class="p">()</span><span class="o">.</span><span class="n">title</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="n">method</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">index</span><span class="o">.</span><span class="n">MultiDocValues</span><span class="p">,</span> <span class="s1">&#39;get</span><span class="si">{}</span><span class="s1">Values&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">docValuesType</span><span class="p">))</span>
+        <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">DocValues</span><span class="p">,</span> <span class="n">docValuesType</span><span class="p">)(</span><span class="n">method</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">indexReader</span><span class="p">,</span> <span class="n">name</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span> <span class="nb">type</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="IndexReader.copy"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.indexers.IndexReader.copy">[docs]</a>    <span class="k">def</span> <span class="nf">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dest</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="n">search</span><span class="o">.</span><span class="n">Query</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">exclude</span><span class="p">:</span> <span class="n">search</span><span class="o">.</span><span class="n">Query</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">merge</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Copy the index to the destination directory.</span>
+
+<span class="sd">        Optimized to use hard links if the destination is a file system path.</span>
+
+<span class="sd">        :param dest: destination directory path or lucene Directory</span>
+<span class="sd">        :param query: optional lucene Query to select documents</span>
+<span class="sd">        :param exclude: optional lucene Query to exclude documents</span>
+<span class="sd">        :param merge: optionally merge into maximum number of segments</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">indexCommit</span><span class="p">,</span> <span class="n">dest</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">IndexWriter</span><span class="p">(</span><span class="n">dest</span><span class="p">)</span> <span class="k">as</span> <span class="n">writer</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">query</span><span class="p">:</span>
+                <span class="n">writer</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">Query</span><span class="o">.</span><span class="n">alldocs</span><span class="p">()</span> <span class="o">-</span> <span class="n">query</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">exclude</span><span class="p">:</span>
+                <span class="n">writer</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">exclude</span><span class="p">)</span>
+            <span class="n">writer</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+            <span class="n">writer</span><span class="o">.</span><span class="n">forceMergeDeletes</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">merge</span><span class="p">:</span>
+                <span class="n">writer</span><span class="o">.</span><span class="n">forceMerge</span><span class="p">(</span><span class="n">merge</span><span class="p">)</span>
+            <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">writer</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="IndexReader.terms"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.indexers.IndexReader.terms">[docs]</a>    <span class="k">def</span> <span class="nf">terms</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">stop</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">counts</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">distance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Generate a slice of term values, optionally with frequency counts.</span>
+
+<span class="sd">        :param name: field name</span>
+<span class="sd">        :param value: term prefix, start value (given stop), or fuzzy value (given distance)</span>
+<span class="sd">        :param stop: optional upper bound for range terms</span>
+<span class="sd">        :param counts: include frequency counts</span>
+<span class="sd">        :param distance: maximum edit distance for fuzzy terms</span>
+<span class="sd">        :param prefix: prefix length for fuzzy terms</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">terms</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">MultiTerms</span><span class="o">.</span><span class="n">getTerms</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">indexReader</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">terms</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">iter</span><span class="p">([])</span>
+        <span class="n">term</span><span class="p">,</span> <span class="n">termsenum</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">Term</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">),</span> <span class="n">terms</span><span class="o">.</span><span class="n">iterator</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">distance</span><span class="p">:</span>
+            <span class="n">terms</span> <span class="o">=</span> <span class="n">termsenum</span> <span class="o">=</span> <span class="n">search</span><span class="o">.</span><span class="n">FuzzyTermsEnum</span><span class="p">(</span><span class="n">terms</span><span class="p">,</span> <span class="n">util</span><span class="o">.</span><span class="n">AttributeSource</span><span class="p">(),</span> <span class="n">term</span><span class="p">,</span> <span class="n">distance</span><span class="p">,</span> <span class="n">prefix</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">termsenum</span><span class="o">.</span><span class="n">seekCeil</span><span class="p">(</span><span class="n">util</span><span class="o">.</span><span class="n">BytesRef</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
+            <span class="n">terms</span> <span class="o">=</span> <span class="n">itertools</span><span class="o">.</span><span class="n">chain</span><span class="p">([</span><span class="n">termsenum</span><span class="o">.</span><span class="n">term</span><span class="p">()],</span> <span class="n">util</span><span class="o">.</span><span class="n">BytesRefIterator</span><span class="o">.</span><span class="n">cast_</span><span class="p">(</span><span class="n">termsenum</span><span class="p">))</span>
+        <span class="n">terms</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">methodcaller</span><span class="p">(</span><span class="s1">&#39;utf8ToString&#39;</span><span class="p">),</span> <span class="n">terms</span><span class="p">)</span>
+        <span class="n">predicate</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">gt</span><span class="p">,</span> <span class="n">stop</span><span class="p">)</span> <span class="k">if</span> <span class="n">stop</span> <span class="k">else</span> <span class="n">operator</span><span class="o">.</span><span class="n">methodcaller</span><span class="p">(</span><span class="s1">&#39;startswith&#39;</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">distance</span><span class="p">:</span>
+            <span class="n">terms</span> <span class="o">=</span> <span class="n">itertools</span><span class="o">.</span><span class="n">takewhile</span><span class="p">(</span><span class="n">predicate</span><span class="p">,</span> <span class="n">terms</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
+        <span class="k">return</span> <span class="p">((</span><span class="n">term</span><span class="p">,</span> <span class="n">termsenum</span><span class="o">.</span><span class="n">docFreq</span><span class="p">())</span> <span class="k">for</span> <span class="n">term</span> <span class="ow">in</span> <span class="n">terms</span><span class="p">)</span> <span class="k">if</span> <span class="n">counts</span> <span class="k">else</span> <span class="n">terms</span></div>
+
+<div class="viewcode-block" id="IndexReader.docs"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.indexers.IndexReader.docs">[docs]</a>    <span class="k">def</span> <span class="nf">docs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">counts</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Generate doc ids which contain given term, optionally with frequency counts.&quot;&quot;&quot;</span>
+        <span class="n">docsenum</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">MultiTerms</span><span class="o">.</span><span class="n">getTermPostingsEnum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">indexReader</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">util</span><span class="o">.</span><span class="n">BytesRef</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
+        <span class="n">docs</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="n">docsenum</span><span class="o">.</span><span class="n">nextDoc</span><span class="p">,</span> <span class="n">index</span><span class="o">.</span><span class="n">PostingsEnum</span><span class="o">.</span><span class="n">NO_MORE_DOCS</span><span class="p">)</span> <span class="k">if</span> <span class="n">docsenum</span> <span class="k">else</span> <span class="p">()</span>
+        <span class="k">return</span> <span class="p">((</span><span class="n">doc</span><span class="p">,</span> <span class="n">docsenum</span><span class="o">.</span><span class="n">freq</span><span class="p">())</span> <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">docs</span><span class="p">)</span> <span class="k">if</span> <span class="n">counts</span> <span class="k">else</span> <span class="nb">iter</span><span class="p">(</span><span class="n">docs</span><span class="p">)</span>  <span class="c1"># type: ignore</span></div>
+
+<div class="viewcode-block" id="IndexReader.positions"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.indexers.IndexReader.positions">[docs]</a>    <span class="k">def</span> <span class="nf">positions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">payloads</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">offsets</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">tuple</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;Generate doc ids and positions which contain given term, optionally with offsets, or only ones with payloads.&quot;&quot;&quot;</span>
+        <span class="n">docsenum</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">MultiTerms</span><span class="o">.</span><span class="n">getTermPostingsEnum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">indexReader</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">util</span><span class="o">.</span><span class="n">BytesRef</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="nb">iter</span><span class="p">(</span><span class="n">docsenum</span><span class="o">.</span><span class="n">nextDoc</span><span class="p">,</span> <span class="n">index</span><span class="o">.</span><span class="n">PostingsEnum</span><span class="o">.</span><span class="n">NO_MORE_DOCS</span><span class="p">)</span> <span class="k">if</span> <span class="n">docsenum</span> <span class="k">else</span> <span class="p">():</span>  <span class="c1"># type: ignore</span>
+            <span class="n">positions</span> <span class="o">=</span> <span class="p">(</span><span class="n">docsenum</span><span class="o">.</span><span class="n">nextPosition</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">docsenum</span><span class="o">.</span><span class="n">freq</span><span class="p">()))</span>
+            <span class="k">if</span> <span class="n">payloads</span><span class="p">:</span>
+                <span class="n">positions</span> <span class="o">=</span> <span class="p">((</span><span class="n">position</span><span class="p">,</span> <span class="n">docsenum</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">utf8ToString</span><span class="p">())</span> <span class="k">for</span> <span class="n">position</span> <span class="ow">in</span> <span class="n">positions</span> <span class="k">if</span> <span class="n">docsenum</span><span class="o">.</span><span class="n">payload</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">offsets</span><span class="p">:</span>
+                <span class="n">positions</span> <span class="o">=</span> <span class="p">((</span><span class="n">docsenum</span><span class="o">.</span><span class="n">startOffset</span><span class="p">(),</span> <span class="n">docsenum</span><span class="o">.</span><span class="n">endOffset</span><span class="p">())</span> <span class="k">for</span> <span class="n">position</span> <span class="ow">in</span> <span class="n">positions</span><span class="p">)</span>
+            <span class="k">yield</span> <span class="n">doc</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">positions</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">vector</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">,</span> <span class="n">field</span><span class="p">):</span>
+        <span class="n">terms</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getTermVector</span><span class="p">(</span><span class="nb">id</span><span class="p">,</span> <span class="n">field</span><span class="p">)</span>
+        <span class="n">termsenum</span> <span class="o">=</span> <span class="n">terms</span><span class="o">.</span><span class="n">iterator</span><span class="p">()</span> <span class="k">if</span> <span class="n">terms</span> <span class="k">else</span> <span class="n">index</span><span class="o">.</span><span class="n">TermsEnum</span><span class="o">.</span><span class="n">EMPTY</span>
+        <span class="k">return</span> <span class="n">termsenum</span><span class="p">,</span> <span class="nb">map</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">methodcaller</span><span class="p">(</span><span class="s1">&#39;utf8ToString&#39;</span><span class="p">),</span> <span class="n">util</span><span class="o">.</span><span class="n">BytesRefIterator</span><span class="o">.</span><span class="n">cast_</span><span class="p">(</span><span class="n">termsenum</span><span class="p">))</span>
+
+<div class="viewcode-block" id="IndexReader.termvector"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.indexers.IndexReader.termvector">[docs]</a>    <span class="k">def</span> <span class="nf">termvector</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">field</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">counts</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Generate terms for given doc id and field, optionally with frequency counts.&quot;&quot;&quot;</span>
+        <span class="n">termsenum</span><span class="p">,</span> <span class="n">terms</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vector</span><span class="p">(</span><span class="nb">id</span><span class="p">,</span> <span class="n">field</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">((</span><span class="n">term</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">termsenum</span><span class="o">.</span><span class="n">totalTermFreq</span><span class="p">()))</span> <span class="k">for</span> <span class="n">term</span> <span class="ow">in</span> <span class="n">terms</span><span class="p">)</span> <span class="k">if</span> <span class="n">counts</span> <span class="k">else</span> <span class="n">terms</span></div>
+
+<div class="viewcode-block" id="IndexReader.positionvector"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.indexers.IndexReader.positionvector">[docs]</a>    <span class="k">def</span> <span class="nf">positionvector</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">field</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">offsets</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">tuple</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;Generate terms and positions for given doc id and field, optionally with character offsets.&quot;&quot;&quot;</span>
+        <span class="n">termsenum</span><span class="p">,</span> <span class="n">terms</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vector</span><span class="p">(</span><span class="nb">id</span><span class="p">,</span> <span class="n">field</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">term</span> <span class="ow">in</span> <span class="n">terms</span><span class="p">:</span>
+            <span class="n">docsenum</span> <span class="o">=</span> <span class="n">termsenum</span><span class="o">.</span><span class="n">postings</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">docsenum</span><span class="o">.</span><span class="n">nextDoc</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">docsenum</span><span class="o">.</span><span class="n">NO_MORE_DOCS</span>
+            <span class="n">positions</span> <span class="o">=</span> <span class="p">(</span><span class="n">docsenum</span><span class="o">.</span><span class="n">nextPosition</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">docsenum</span><span class="o">.</span><span class="n">freq</span><span class="p">()))</span>
+            <span class="k">if</span> <span class="n">offsets</span><span class="p">:</span>
+                <span class="n">positions</span> <span class="o">=</span> <span class="p">((</span><span class="n">docsenum</span><span class="o">.</span><span class="n">startOffset</span><span class="p">(),</span> <span class="n">docsenum</span><span class="o">.</span><span class="n">endOffset</span><span class="p">())</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">positions</span><span class="p">)</span>
+            <span class="k">yield</span> <span class="n">term</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">positions</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="IndexReader.morelikethis"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.indexers.IndexReader.morelikethis">[docs]</a>    <span class="k">def</span> <span class="nf">morelikethis</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">doc</span><span class="p">,</span> <span class="o">*</span><span class="n">fields</span><span class="p">,</span> <span class="o">**</span><span class="n">attrs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Query</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return MoreLikeThis query for document.</span>
+
+<span class="sd">        :param doc: document id or text</span>
+<span class="sd">        :param fields: document fields to use, optional for termvectors</span>
+<span class="sd">        :param attrs: additional attributes to set on the morelikethis object</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">mlt</span> <span class="o">=</span> <span class="n">queries</span><span class="o">.</span><span class="n">mlt</span><span class="o">.</span><span class="n">MoreLikeThis</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">indexReader</span><span class="p">)</span>
+        <span class="n">mlt</span><span class="o">.</span><span class="n">fieldNames</span> <span class="o">=</span> <span class="n">fields</span> <span class="ow">or</span> <span class="kc">None</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">attrs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="n">mlt</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">mlt</span><span class="o">.</span><span class="n">like</span><span class="p">(</span><span class="n">fields</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">StringReader</span><span class="p">(</span><span class="n">doc</span><span class="p">))</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">doc</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="n">mlt</span><span class="o">.</span><span class="n">like</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="IndexSearcher"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.indexers.IndexSearcher">[docs]</a><span class="k">class</span> <span class="nc">IndexSearcher</span><span class="p">(</span><span class="n">search</span><span class="o">.</span><span class="n">IndexSearcher</span><span class="p">,</span> <span class="n">IndexReader</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Inherited lucene IndexSearcher, with a mixed-in IndexReader.</span>
+
+<span class="sd">    :param directory: directory path, lucene Directory, or lucene IndexReader</span>
+<span class="sd">    :param analyzer: lucene Analyzer, default StandardAnalyzer</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">directory</span><span class="p">,</span> <span class="n">analyzer</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">shared</span> <span class="o">=</span> <span class="n">closing</span><span class="p">()</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shared</span><span class="o">.</span><span class="n">reader</span><span class="p">(</span><span class="n">directory</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">analyzer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">shared</span><span class="o">.</span><span class="n">analyzer</span><span class="p">(</span><span class="n">analyzer</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">spellcheckers</span> <span class="o">=</span> <span class="p">{}</span>
+
+<div class="viewcode-block" id="IndexSearcher.load"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.indexers.IndexSearcher.load">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">load</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">directory</span><span class="p">,</span> <span class="n">analyzer</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;IndexSearcher&#39;</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Open `IndexSearcher`_ with a lucene RAMDirectory, loading index into memory.&quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="n">closing</span><span class="o">.</span><span class="n">store</span><span class="p">(</span><span class="n">directory</span><span class="p">)</span> <span class="k">as</span> <span class="n">directory</span><span class="p">:</span>
+            <span class="n">directory</span> <span class="o">=</span> <span class="n">store</span><span class="o">.</span><span class="n">RAMDirectory</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="n">store</span><span class="o">.</span><span class="n">IOContext</span><span class="o">.</span><span class="n">DEFAULT</span><span class="p">)</span>
+        <span class="bp">self</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="n">analyzer</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">shared</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">directory</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+<div class="viewcode-block" id="IndexSearcher.__del__"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.indexers.IndexSearcher.__del__">[docs]</a>    <span class="k">def</span> <span class="fm">__del__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">hash</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">decRef</span><span class="p">()</span></div>
+
+    <span class="k">def</span> <span class="nf">openIfChanged</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">index</span><span class="o">.</span><span class="n">DirectoryReader</span><span class="o">.</span><span class="n">openIfChanged</span><span class="p">(</span><span class="n">index</span><span class="o">.</span><span class="n">DirectoryReader</span><span class="o">.</span><span class="n">cast_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">indexReader</span><span class="p">))</span>
+
+<div class="viewcode-block" id="IndexSearcher.reopen"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.indexers.IndexSearcher.reopen">[docs]</a>    <span class="k">def</span> <span class="nf">reopen</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spellcheckers</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;IndexSearcher&#39;</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return current `IndexSearcher`_, only creating a new one if necessary.</span>
+
+<span class="sd">        :param spellcheckers: refresh cached :attr:`spellcheckers`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">reader</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">openIfChanged</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">reader</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span>
+        <span class="n">other</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)(</span><span class="n">reader</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">analyzer</span><span class="p">)</span>
+        <span class="n">other</span><span class="o">.</span><span class="n">decRef</span><span class="p">()</span>
+        <span class="n">other</span><span class="o">.</span><span class="n">shared</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">shared</span>
+        <span class="k">if</span> <span class="n">spellcheckers</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">spellcheckers</span><span class="p">:</span>
+                <span class="n">other</span><span class="o">.</span><span class="n">spellchecker</span><span class="p">(</span><span class="n">field</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">other</span><span class="o">.</span><span class="n">spellcheckers</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">spellcheckers</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">other</span></div>
+
+<div class="viewcode-block" id="IndexSearcher.__getitem__"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.indexers.IndexSearcher.__getitem__">[docs]</a>    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Document</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">Document</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">doc</span><span class="p">(</span><span class="nb">id</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="IndexSearcher.get"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.indexers.IndexSearcher.get">[docs]</a>    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="o">*</span><span class="n">fields</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Document</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return `Document`_ with only selected fields loaded.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">Document</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">document</span><span class="p">(</span><span class="nb">id</span><span class="p">,</span> <span class="n">HashSet</span><span class="p">(</span><span class="n">Arrays</span><span class="o">.</span><span class="n">asList</span><span class="p">(</span><span class="n">fields</span><span class="p">))))</span></div>
+
+<div class="viewcode-block" id="IndexSearcher.spans"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.indexers.IndexSearcher.spans">[docs]</a>    <span class="k">def</span> <span class="nf">spans</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="n">spans</span><span class="o">.</span><span class="n">SpanQuery</span><span class="p">,</span> <span class="n">positions</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">tuple</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;Generate docs with occurrence counts for a span query.</span>
+
+<span class="sd">        :param query: lucene SpanQuery</span>
+<span class="sd">        :param positions: optionally include slice positions instead of counts</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">offset</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">weight</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">createWeight</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">search</span><span class="o">.</span><span class="n">ScoreMode</span><span class="o">.</span><span class="n">COMPLETE_NO_SCORES</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+        <span class="n">postings</span> <span class="o">=</span> <span class="n">search</span><span class="o">.</span><span class="n">spans</span><span class="o">.</span><span class="n">SpanWeight</span><span class="o">.</span><span class="n">Postings</span><span class="o">.</span><span class="n">POSITIONS</span>
+        <span class="k">for</span> <span class="n">reader</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">readers</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">spans</span> <span class="o">=</span> <span class="n">weight</span><span class="o">.</span><span class="n">getSpans</span><span class="p">(</span><span class="n">reader</span><span class="o">.</span><span class="n">context</span><span class="p">,</span> <span class="n">postings</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">lucene</span><span class="o">.</span><span class="n">JavaError</span><span class="p">:</span>  <span class="c1"># EOF</span>
+                <span class="k">continue</span>
+            <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="nb">iter</span><span class="p">(</span><span class="n">spans</span><span class="o">.</span><span class="n">nextDoc</span><span class="p">,</span> <span class="n">spans</span><span class="o">.</span><span class="n">NO_MORE_DOCS</span><span class="p">):</span>  <span class="c1"># type: int</span>
+                <span class="n">starts</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="n">spans</span><span class="o">.</span><span class="n">nextStartPosition</span><span class="p">,</span> <span class="n">spans</span><span class="o">.</span><span class="n">NO_MORE_POSITIONS</span><span class="p">)</span>  <span class="c1"># type: Iterator</span>
+                <span class="k">if</span> <span class="n">positions</span><span class="p">:</span>
+                    <span class="n">values</span> <span class="o">=</span> <span class="p">[(</span><span class="n">start</span><span class="p">,</span> <span class="n">spans</span><span class="o">.</span><span class="n">endPosition</span><span class="p">())</span> <span class="k">for</span> <span class="n">start</span> <span class="ow">in</span> <span class="n">starts</span><span class="p">]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">values</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">starts</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
+                <span class="k">yield</span> <span class="p">(</span><span class="n">doc</span> <span class="o">+</span> <span class="n">offset</span><span class="p">),</span> <span class="n">values</span>
+            <span class="n">offset</span> <span class="o">+=</span> <span class="n">reader</span><span class="o">.</span><span class="n">maxDoc</span><span class="p">()</span></div>
+
+    <span class="k">def</span> <span class="nf">parse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">spellcheck</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">search</span><span class="o">.</span><span class="n">Query</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">query</span>
+        <span class="k">if</span> <span class="n">spellcheck</span><span class="p">:</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;parser&#39;</span><span class="p">],</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;searcher&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">SpellParser</span><span class="p">,</span> <span class="bp">self</span>
+        <span class="k">return</span> <span class="n">Analyzer</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">analyzer</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">highlighter</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">uhighlight</span><span class="o">.</span><span class="n">UnifiedHighlighter</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;lucene UnifiedHighlighter&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">uhighlight</span><span class="o">.</span><span class="n">UnifiedHighlighter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">analyzer</span><span class="p">)</span>
+
+<div class="viewcode-block" id="IndexSearcher.count"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.indexers.IndexSearcher.count">[docs]</a>    <span class="k">def</span> <span class="nf">count</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">query</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return number of hits for given query or term.</span>
+
+<span class="sd">        :param query: :meth:`search` compatible query, or optimally a name and value</span>
+<span class="sd">        :param options: additional :meth:`search` options</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">query</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">docFreq</span><span class="p">(</span><span class="n">index</span><span class="o">.</span><span class="n">Term</span><span class="p">(</span><span class="o">*</span><span class="n">query</span><span class="p">))</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="o">*</span><span class="n">query</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">)</span> <span class="k">if</span> <span class="n">query</span> <span class="k">else</span> <span class="n">Query</span><span class="o">.</span><span class="n">alldocs</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">IndexSearcher</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="n">query</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">collector</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sort</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">scores</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">mincount</span><span class="o">=</span><span class="mi">1000</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">count</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">search</span><span class="o">.</span><span class="n">CachingCollector</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="s1">&#39;inf&#39;</span><span class="p">))</span>
+        <span class="n">count</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">count</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">maxDoc</span><span class="p">()</span> <span class="ow">or</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">mincount</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">count</span><span class="p">,</span> <span class="n">mincount</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">sort</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">search</span><span class="o">.</span><span class="n">TopScoreDocCollector</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">count</span><span class="p">,</span> <span class="n">mincount</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sort</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">sort</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sortfield</span><span class="p">(</span><span class="n">sort</span><span class="p">,</span> <span class="n">reverse</span><span class="o">=</span><span class="n">reverse</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sort</span><span class="p">,</span> <span class="n">search</span><span class="o">.</span><span class="n">Sort</span><span class="p">):</span>
+            <span class="n">sort</span> <span class="o">=</span> <span class="n">search</span><span class="o">.</span><span class="n">Sort</span><span class="p">(</span><span class="n">sort</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">search</span><span class="o">.</span><span class="n">TopFieldCollector</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">sort</span><span class="p">,</span> <span class="n">count</span><span class="p">,</span> <span class="n">mincount</span><span class="p">)</span>
+
+<div class="viewcode-block" id="IndexSearcher.search"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.indexers.IndexSearcher.search">[docs]</a>    <span class="k">def</span> <span class="nf">search</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sort</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">scores</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">mincount</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">parser</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Hits</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Run query and return `Hits`_.</span>
+
+<span class="sd">        .. versionchanged:: 1.4 sort param for lucene only; use Hits.sorted with a callable</span>
+<span class="sd">        .. versionchanged:: 2.3 maxscore option removed; use Hits.maxscore property</span>
+
+<span class="sd">        :param query: query string or lucene Query</span>
+<span class="sd">        :param count: maximum number of hits to retrieve</span>
+<span class="sd">        :param sort: lucene Sort parameters</span>
+<span class="sd">        :param reverse: reverse flag used with sort</span>
+<span class="sd">        :param scores: compute scores for candidate results when sorting</span>
+<span class="sd">        :param mincount: total hit count accuracy threshold</span>
+<span class="sd">        :param timeout: stop search after elapsed number of seconds</span>
+<span class="sd">        :param parser: :meth:`Analyzer.parse` options</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="n">Query</span><span class="o">.</span><span class="n">alldocs</span><span class="p">()</span> <span class="k">if</span> <span class="n">query</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="o">**</span><span class="n">parser</span><span class="p">)</span>
+        <span class="n">cache</span> <span class="o">=</span> <span class="n">collector</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">collector</span><span class="p">(</span><span class="n">count</span><span class="p">,</span> <span class="n">sort</span><span class="p">,</span> <span class="n">reverse</span><span class="p">,</span> <span class="n">scores</span><span class="p">,</span> <span class="n">mincount</span><span class="p">)</span>
+        <span class="n">counter</span> <span class="o">=</span> <span class="n">search</span><span class="o">.</span><span class="n">TimeLimitingCollector</span><span class="o">.</span><span class="n">getGlobalCounter</span><span class="p">()</span>
+        <span class="n">results</span> <span class="o">=</span> <span class="n">collector</span> <span class="k">if</span> <span class="n">timeout</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">search</span><span class="o">.</span><span class="n">TimeLimitingCollector</span><span class="p">(</span><span class="n">collector</span><span class="p">,</span> <span class="n">counter</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">timeout</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">))</span>
+        <span class="k">with</span> <span class="n">suppress</span><span class="p">(</span><span class="n">search</span><span class="o">.</span><span class="n">TimeLimitingCollector</span><span class="o">.</span><span class="n">TimeExceededException</span><span class="p">):</span>
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">results</span><span class="p">)</span>
+            <span class="n">timeout</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cache</span><span class="p">,</span> <span class="n">search</span><span class="o">.</span><span class="n">CachingCollector</span><span class="p">):</span>
+            <span class="n">collector</span> <span class="o">=</span> <span class="n">search</span><span class="o">.</span><span class="n">TotalHitCountCollector</span><span class="p">()</span>
+            <span class="n">cache</span><span class="o">.</span><span class="n">replay</span><span class="p">(</span><span class="n">collector</span><span class="p">)</span>
+            <span class="n">count</span> <span class="o">=</span> <span class="n">collector</span><span class="o">.</span><span class="n">totalHits</span> <span class="ow">or</span> <span class="mi">1</span>
+            <span class="n">collector</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">collector</span><span class="p">(</span><span class="n">count</span><span class="p">,</span> <span class="n">sort</span><span class="p">,</span> <span class="n">reverse</span><span class="p">,</span> <span class="n">scores</span><span class="p">,</span> <span class="n">count</span><span class="p">)</span>
+            <span class="n">cache</span><span class="o">.</span><span class="n">replay</span><span class="p">(</span><span class="n">collector</span><span class="p">)</span>
+        <span class="n">topdocs</span> <span class="o">=</span> <span class="n">collector</span><span class="o">.</span><span class="n">topDocs</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">scores</span><span class="p">:</span>
+            <span class="n">search</span><span class="o">.</span><span class="n">TopFieldCollector</span><span class="o">.</span><span class="n">populateScores</span><span class="p">(</span><span class="n">topdocs</span><span class="o">.</span><span class="n">scoreDocs</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Hits</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">topdocs</span><span class="o">.</span><span class="n">scoreDocs</span><span class="p">,</span> <span class="n">topdocs</span><span class="o">.</span><span class="n">totalHits</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="IndexSearcher.facets"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.indexers.IndexSearcher.facets">[docs]</a>    <span class="k">def</span> <span class="nf">facets</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="o">*</span><span class="n">fields</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">**</span><span class="n">query_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return mapping of document counts for the intersection with each facet.</span>
+
+<span class="sd">        .. versionchanged:: 1.6 filters are no longer implicitly cached, a `GroupingSearch`_ is used instead</span>
+
+<span class="sd">        :param query: query string or lucene Query</span>
+<span class="sd">        :param fields: field names for lucene GroupingSearch</span>
+<span class="sd">        :param query_map: `{facet: {key: query, ...}, ...}` for intersected query counts</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+        <span class="n">counts</span> <span class="o">=</span> <span class="p">{</span><span class="n">field</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="n">query</span><span class="p">)</span><span class="o">.</span><span class="n">facets</span> <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">fields</span><span class="p">}</span>
+        <span class="k">for</span> <span class="n">facet</span><span class="p">,</span> <span class="n">queries</span> <span class="ow">in</span> <span class="n">query_map</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">counts</span><span class="p">[</span><span class="n">facet</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="n">Query</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">queries</span><span class="p">[</span><span class="n">key</span><span class="p">]))</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">queries</span><span class="p">}</span>
+        <span class="k">return</span> <span class="n">counts</span></div>
+
+<div class="viewcode-block" id="IndexSearcher.groupby"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.indexers.IndexSearcher.groupby">[docs]</a>    <span class="k">def</span> <span class="nf">groupby</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">count</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">start</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="o">**</span><span class="n">attrs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Groups</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return `Hits`_ grouped by field using a `GroupingSearch`_.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">GroupingSearch</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="o">**</span><span class="n">attrs</span><span class="p">)</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">query</span><span class="p">),</span> <span class="n">count</span><span class="p">,</span> <span class="n">start</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="IndexSearcher.spellchecker"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.indexers.IndexSearcher.spellchecker">[docs]</a>    <span class="k">def</span> <span class="nf">spellchecker</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SpellChecker</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return and cache spellchecker for given field.&quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">spellcheckers</span><span class="p">[</span><span class="n">field</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">spellcheckers</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="n">SpellChecker</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">terms</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="n">counts</span><span class="o">=</span><span class="kc">True</span><span class="p">)))</span></div>
+
+<div class="viewcode-block" id="IndexSearcher.complete"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.indexers.IndexSearcher.complete">[docs]</a>    <span class="k">def</span> <span class="nf">complete</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">count</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return ordered suggested words for prefix.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">spellchecker</span><span class="p">(</span><span class="n">field</span><span class="p">)</span><span class="o">.</span><span class="n">complete</span><span class="p">(</span><span class="n">prefix</span><span class="p">,</span> <span class="n">count</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="IndexSearcher.match"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.indexers.IndexSearcher.match">[docs]</a>    <span class="k">def</span> <span class="nf">match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">document</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">,</span> <span class="o">*</span><span class="n">queries</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;Generate scores for all queries against a given document mapping.&quot;&quot;&quot;</span>
+        <span class="n">searcher</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">memory</span><span class="o">.</span><span class="n">MemoryIndex</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">document</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">analyzer</span><span class="p">]</span> <span class="o">*</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+            <span class="n">searcher</span><span class="o">.</span><span class="n">addField</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">searcher</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">query</span><span class="p">))</span> <span class="k">for</span> <span class="n">query</span> <span class="ow">in</span> <span class="n">queries</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="MultiSearcher"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.indexers.MultiSearcher">[docs]</a><span class="k">class</span> <span class="nc">MultiSearcher</span><span class="p">(</span><span class="n">IndexSearcher</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;IndexSearcher with underlying lucene MultiReader.</span>
+
+<span class="sd">    :param reader: directory paths, Directories, IndexReaders, or a single MultiReader</span>
+<span class="sd">    :param analyzer: lucene Analyzer, default StandardAnalyzer</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reader</span><span class="p">,</span> <span class="n">analyzer</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">reader</span><span class="p">,</span> <span class="n">analyzer</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">indexReaders</span> <span class="o">=</span> <span class="p">[</span><span class="n">index</span><span class="o">.</span><span class="n">DirectoryReader</span><span class="o">.</span><span class="n">cast_</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">reader</span><span class="p">())</span> <span class="k">for</span> <span class="n">context</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">children</span><span class="p">()]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">version</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">reader</span><span class="o">.</span><span class="n">version</span> <span class="k">for</span> <span class="n">reader</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">indexReaders</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">index</span><span class="o">.</span><span class="n">MultiReader</span><span class="o">.</span><span class="n">cast_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">indexReader</span><span class="p">),</span> <span class="n">name</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">openIfChanged</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">readers</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">index</span><span class="o">.</span><span class="n">DirectoryReader</span><span class="o">.</span><span class="n">openIfChanged</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">indexReaders</span><span class="p">))</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">readers</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">index</span><span class="o">.</span><span class="n">MultiReader</span><span class="p">([</span><span class="n">new</span> <span class="ow">or</span> <span class="n">old</span><span class="o">.</span><span class="n">incRef</span><span class="p">()</span> <span class="ow">or</span> <span class="n">old</span> <span class="k">for</span> <span class="n">new</span><span class="p">,</span> <span class="n">old</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">readers</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">indexReaders</span><span class="p">)])</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">timestamp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="n">IndexReader</span><span class="p">(</span><span class="n">reader</span><span class="p">)</span><span class="o">.</span><span class="n">timestamp</span> <span class="k">for</span> <span class="n">reader</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">indexReaders</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="IndexWriter"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.indexers.IndexWriter">[docs]</a><span class="k">class</span> <span class="nc">IndexWriter</span><span class="p">(</span><span class="n">index</span><span class="o">.</span><span class="n">IndexWriter</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Inherited lucene IndexWriter.</span>
+
+<span class="sd">    Supports setting fields parameters explicitly, so documents can be represented as dictionaries.</span>
+
+<span class="sd">    :param directory: directory path or lucene Directory, default RAMDirectory</span>
+<span class="sd">    :param mode: file mode (rwa), except updating (+) is implied</span>
+<span class="sd">    :param analyzer: lucene Analyzer, default StandardAnalyzer</span>
+<span class="sd">    :param version: lucene Version argument passed to IndexWriterConfig, default is latest</span>
+<span class="sd">    :param attrs: additional attributes to set on IndexWriterConfig</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">parse</span> <span class="o">=</span> <span class="n">IndexSearcher</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">[</span><span class="s1">&#39;parse&#39;</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">directory</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="n">analyzer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">version</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">attrs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">shared</span> <span class="o">=</span> <span class="n">closing</span><span class="p">()</span>
+        <span class="n">config</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">IndexWriterConfig</span><span class="p">()</span> <span class="k">if</span> <span class="n">analyzer</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">index</span><span class="o">.</span><span class="n">IndexWriterConfig</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shared</span><span class="o">.</span><span class="n">analyzer</span><span class="p">(</span><span class="n">analyzer</span><span class="p">))</span>
+        <span class="n">config</span><span class="o">.</span><span class="n">openMode</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">IndexWriterConfig</span><span class="o">.</span><span class="n">OpenMode</span><span class="o">.</span><span class="n">values</span><span class="p">()[</span><span class="s1">&#39;wra&#39;</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">mode</span><span class="p">)]</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">attrs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">policy</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">indexDeletionPolicy</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">SnapshotDeletionPolicy</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">indexDeletionPolicy</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shared</span><span class="o">.</span><span class="n">directory</span><span class="p">(</span><span class="n">directory</span><span class="p">),</span> <span class="n">config</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fields</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># type: dict</span>
+
+<div class="viewcode-block" id="IndexWriter.__del__"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.indexers.IndexWriter.__del__">[docs]</a>    <span class="k">def</span> <span class="fm">__del__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">hash</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="k">with</span> <span class="n">suppress</span><span class="p">(</span><span class="n">IOException</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="IndexWriter.__len__"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.indexers.IndexWriter.__len__">[docs]</a>    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">docStats</span><span class="o">.</span><span class="n">numDocs</span></div>
+
+<div class="viewcode-block" id="IndexWriter.check"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.indexers.IndexWriter.check">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">check</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">directory</span><span class="p">,</span> <span class="n">fix</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">index</span><span class="o">.</span><span class="n">CheckIndex</span><span class="o">.</span><span class="n">Status</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Check and optionally fix unlocked index, returning lucene CheckIndex.Status.&quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="n">closing</span><span class="o">.</span><span class="n">store</span><span class="p">(</span><span class="n">directory</span><span class="p">)</span> <span class="k">as</span> <span class="n">directory</span><span class="p">:</span>
+            <span class="k">with</span> <span class="n">contextlib</span><span class="o">.</span><span class="n">closing</span><span class="p">(</span><span class="n">index</span><span class="o">.</span><span class="n">CheckIndex</span><span class="p">(</span><span class="n">directory</span><span class="p">))</span> <span class="k">as</span> <span class="n">checkindex</span><span class="p">:</span>
+                <span class="n">status</span> <span class="o">=</span> <span class="n">checkindex</span><span class="o">.</span><span class="n">checkIndex</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">fix</span><span class="p">:</span>
+                    <span class="n">checkindex</span><span class="o">.</span><span class="n">exorciseIndex</span><span class="p">(</span><span class="n">status</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">status</span></div>
+
+<div class="viewcode-block" id="IndexWriter.set"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.indexers.IndexWriter.set">[docs]</a>    <span class="k">def</span> <span class="nf">set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="bp">cls</span><span class="o">=</span><span class="n">Field</span><span class="p">,</span> <span class="o">**</span><span class="n">settings</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Field</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Assign settings to field name and return the field.</span>
+
+<span class="sd">        :param name: registered name of field</span>
+<span class="sd">        :param cls: optional `Field`_ constructor</span>
+<span class="sd">        :param settings: stored, indexed, etc. options compatible with `Field`_</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">field</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">settings</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">field</span></div>
+
+<div class="viewcode-block" id="IndexWriter.document"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.indexers.IndexWriter.document">[docs]</a>    <span class="k">def</span> <span class="nf">document</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">items</span><span class="o">=</span><span class="p">(),</span> <span class="o">**</span><span class="n">terms</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">document</span><span class="o">.</span><span class="n">Document</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Return lucene Document from mapping of field names to one or multiple values.&quot;&quot;&quot;</span>
+        <span class="n">doc</span> <span class="o">=</span> <span class="n">document</span><span class="o">.</span><span class="n">Document</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="nb">dict</span><span class="p">(</span><span class="n">items</span><span class="p">,</span> <span class="o">**</span><span class="n">terms</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">Atomic</span><span class="p">):</span>
+                <span class="n">values</span> <span class="o">=</span> <span class="p">(</span><span class="n">values</span><span class="p">,)</span>
+            <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">(</span><span class="o">*</span><span class="n">values</span><span class="p">):</span>
+                <span class="n">doc</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">field</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">doc</span></div>
+
+<div class="viewcode-block" id="IndexWriter.add"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.indexers.IndexWriter.add">[docs]</a>    <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">document</span><span class="o">=</span><span class="p">(),</span> <span class="o">**</span><span class="n">terms</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Add :meth:`document` to index with optional boost.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">addDocument</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">document</span><span class="p">(</span><span class="n">document</span><span class="p">,</span> <span class="o">**</span><span class="n">terms</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="IndexWriter.update"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.indexers.IndexWriter.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">document</span><span class="o">=</span><span class="p">(),</span> <span class="o">**</span><span class="n">terms</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Atomically delete documents which match given term and add the new :meth:`document`.</span>
+
+<span class="sd">        .. versionchanged:: 1.7 update in-place if only DocValues are given</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">doc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">document</span><span class="p">(</span><span class="n">document</span><span class="p">,</span> <span class="o">**</span><span class="n">terms</span><span class="p">)</span>
+        <span class="n">term</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">Term</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="o">*</span><span class="p">[</span><span class="n">value</span><span class="p">]</span> <span class="k">if</span> <span class="n">value</span> <span class="k">else</span> <span class="n">doc</span><span class="o">.</span><span class="n">getValues</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">doc</span><span class="o">.</span><span class="n">iterator</span><span class="p">())</span>
+        <span class="n">types</span> <span class="o">=</span> <span class="p">[</span><span class="n">Field</span><span class="o">.</span><span class="n">cast_</span><span class="p">(</span><span class="n">field</span><span class="o">.</span><span class="n">fieldType</span><span class="p">())</span> <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">fields</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">ft</span><span class="o">.</span><span class="n">stored</span><span class="p">()</span> <span class="ow">or</span> <span class="n">ft</span><span class="o">.</span><span class="n">indexOptions</span><span class="p">()</span> <span class="o">!=</span> <span class="n">index</span><span class="o">.</span><span class="n">IndexOptions</span><span class="o">.</span><span class="n">NONE</span> <span class="ow">or</span> <span class="n">Field</span><span class="o">.</span><span class="n">dimensions</span><span class="o">.</span><span class="n">fget</span><span class="p">(</span><span class="n">ft</span><span class="p">)</span> <span class="k">for</span> <span class="n">ft</span> <span class="ow">in</span> <span class="n">types</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">updateDocument</span><span class="p">(</span><span class="n">term</span><span class="p">,</span> <span class="n">doc</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">fields</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">updateDocValues</span><span class="p">(</span><span class="n">term</span><span class="p">,</span> <span class="o">*</span><span class="n">fields</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="IndexWriter.delete"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.indexers.IndexWriter.delete">[docs]</a>    <span class="k">def</span> <span class="nf">delete</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">query</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Remove documents which match given query or term.</span>
+
+<span class="sd">        :param query: :meth:`IndexSearcher.search` compatible query, or optimally a name and value</span>
+<span class="sd">        :param options: additional :meth:`Analyzer.parse` options</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">parse</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parse</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">query</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">index</span><span class="o">.</span><span class="n">Term</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">deleteDocuments</span><span class="p">(</span><span class="n">parse</span><span class="p">(</span><span class="o">*</span><span class="n">query</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="IndexWriter.__iadd__"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.indexers.IndexWriter.__iadd__">[docs]</a>    <span class="k">def</span> <span class="fm">__iadd__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">directory</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Add directory (or reader, searcher, writer) to index.&quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="n">closing</span><span class="o">.</span><span class="n">store</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="s1">&#39;directory&#39;</span><span class="p">,</span> <span class="n">directory</span><span class="p">))</span> <span class="k">as</span> <span class="n">directory</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">addIndexes</span><span class="p">([</span><span class="n">directory</span><span class="p">])</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+<div class="viewcode-block" id="IndexWriter.snapshot"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.indexers.IndexWriter.snapshot">[docs]</a>    <span class="nd">@contextlib</span><span class="o">.</span><span class="n">contextmanager</span>
+    <span class="k">def</span> <span class="nf">snapshot</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return context manager of an index commit snapshot.</span>
+
+<span class="sd">        .. versionchanged:: 1.4 lucene identifies snapshots by commit generation</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">commit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">policy</span><span class="o">.</span><span class="n">snapshot</span><span class="p">()</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">commit</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">policy</span><span class="o">.</span><span class="n">release</span><span class="p">(</span><span class="n">commit</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="fm">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span> <span class="fm">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rollback</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="Indexer"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.indexers.Indexer">[docs]</a><span class="k">class</span> <span class="nc">Indexer</span><span class="p">(</span><span class="n">IndexWriter</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;An all-purpose interface to an index.</span>
+
+<span class="sd">    Creates an `IndexWriter`_ with a delegated `IndexSearcher`_.</span>
+
+<span class="sd">    :param nrt: optionally use a near real-time searcher</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">directory</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="n">analyzer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">version</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">nrt</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">attrs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">analyzer</span><span class="p">,</span> <span class="n">version</span><span class="p">,</span> <span class="o">**</span><span class="n">attrs</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nrt</span> <span class="o">=</span> <span class="n">nrt</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">indexSearcher</span> <span class="o">=</span> <span class="n">IndexSearcher</span><span class="p">(</span><span class="bp">self</span> <span class="k">if</span> <span class="n">nrt</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">directory</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">analyzer</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;indexSearcher&#39;</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">indexSearcher</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__contains__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">id</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">indexSearcher</span>
+
+    <span class="k">def</span> <span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">indexSearcher</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">indexSearcher</span><span class="p">[</span><span class="nb">id</span><span class="p">]</span>
+
+<div class="viewcode-block" id="Indexer.refresh"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.indexers.Indexer.refresh">[docs]</a>    <span class="k">def</span> <span class="nf">refresh</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">caches</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Store refreshed searcher with :meth:`IndexSearcher.reopen` caches.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">indexSearcher</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">indexSearcher</span><span class="o">.</span><span class="n">reopen</span><span class="p">(</span><span class="o">**</span><span class="n">caches</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Indexer.commit"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.indexers.Indexer.commit">[docs]</a>    <span class="k">def</span> <span class="nf">commit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">merge</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">caches</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Commit writes and :meth:`refresh` searcher.</span>
+
+<span class="sd">        :param merge: merge segments with deletes, or optionally specify maximum number of segments</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">merge</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">merge</span><span class="p">,</span> <span class="nb">bool</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">forceMergeDeletes</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">forceMerge</span><span class="p">(</span><span class="n">merge</span><span class="p">)</span>
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">refresh</span><span class="p">(</span><span class="o">**</span><span class="n">caches</span><span class="p">)</span></div></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, Aric Coady
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
