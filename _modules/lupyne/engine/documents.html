@@ -485,7 +485,7 @@
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">maxscore</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;max score of present hits; not necessarily of all matches&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">scores</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="s1">&#39;nan&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">scores</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="s1">&#39;nan&#39;</span><span class="p">))</span>
 
 <div class="viewcode-block" id="Hits.items"><a class="viewcode-back" href="../../../engine.html#lupyne.engine.documents.Hits.items">[docs]</a>    <span class="k">def</span> <span class="nf">items</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">tuple</span><span class="p">]:</span>
         <span class="sd">&quot;&quot;&quot;Generate zipped ids and scores.&quot;&quot;&quot;</span>
@@ -606,7 +606,7 @@
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2019, Aric Coady
+        &copy; Copyright 2020, Aric Coady
 
     </p>
   </div>

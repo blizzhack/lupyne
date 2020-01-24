@@ -199,7 +199,7 @@
 <span class="gp">&gt;&gt;&gt; </span><span class="n">hits</span> <span class="o">=</span> <span class="n">indexer</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s1">&#39;text:hello&#39;</span><span class="p">)</span>             <span class="c1"># run search and return sequence of documents</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">len</span><span class="p">(</span><span class="n">hits</span><span class="p">),</span> <span class="n">hits</span><span class="o">.</span><span class="n">count</span>                           <span class="c1"># 1 hit retrieved (out of a total of 1)</span>
 <span class="go">(1, 1)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">hit</span><span class="p">,</span> <span class="o">=</span> <span class="n">hits</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="p">(</span><span class="n">hit</span><span class="p">,)</span> <span class="o">=</span> <span class="n">hits</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">hit</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span>                                     <span class="c1"># hits support mapping interface for their stored fields</span>
 <span class="go">&#39;sample&#39;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">hit</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">hit</span><span class="o">.</span><span class="n">score</span>                               <span class="c1"># plus internal doc number and score</span>
@@ -306,7 +306,7 @@
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2019, Aric Coady
+        &copy; Copyright 2020, Aric Coady
 
     </p>
   </div>
